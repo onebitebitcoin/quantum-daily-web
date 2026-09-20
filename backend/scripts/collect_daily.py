@@ -1194,7 +1194,7 @@ def apply_date_to_cover(cover_fixed: dict[str, Any], date: datetime.date) -> dic
     막는다.
     """
     cover = dict(cover_fixed)
-    cover["mark"] = [f"{date.month}월 {date.day}일", "AI 카드뉴스"]
+    cover["mark"] = [f"{date.month}월 {date.day}일", "양자 카드뉴스"]
     cover["meta"] = [*cover_fixed["meta"][:2], f"{date:%Y.%m.%d}"]
     return cover
 
@@ -1215,8 +1215,8 @@ def build_skeleton(
     closing["sources"] = sources
     return {
         "meta": {
-            "title": f"AI 하이라이트 · {date.month}.{date.day}",
-            "slug": f"ai-daily-{date:%m%d}",
+            "title": f"양자 하이라이트 · {date.month}.{date.day}",
+            "slug": f"quantum-daily-{date:%m%d}",
             "date": date.isoformat(),
         },
         "theme": theme,

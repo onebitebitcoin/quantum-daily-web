@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "AI 하이라이트 · 7.30",
-    "slug": "ai-daily-0730",
+    "title": "양자 하이라이트 · 7.30",
+    "slug": "quantum-daily-0730",
     "date": "2026-07-30"
   },
   "theme": {
@@ -22,19 +22,19 @@
     "chip_bg": "rgba(16,26,27,0.05)",
     "seg_off": "rgba(255,255,255,0.14)"
   },
-  "brand": "데일리 AI",
+  "brand": "데일리 퀀텀",
   "cover": {
-    "eyebrow": "데일리 다이제스트",
+    "eyebrow": "위클리 다이제스트",
     "mark": [
-      "AI",
+      "양자",
       "하이라이트"
     ],
     "meta": [
-      "최근 36시간 수집",
-      "뉴스 + 유튜브",
+      "최근 7일 수집",
+      "뉴스 + 연구",
       "2026.07.30"
     ],
-    "hint": "위로 넘겨서 오늘의 AI 이슈 10건 보기"
+    "hint": "위로 넘겨서 이번 주 양자 이슈 10건 보기"
   },
   "cards": [
     {
@@ -286,7 +286,7 @@
     "eyebrow": "SUMMARY",
     "mark_lines": [
       "데일리",
-      "AI"
+      "퀀텀"
     ],
     "links": [
       {
@@ -294,15 +294,15 @@
         "href": "https://open.kakao.com/o/gaIpmlni"
       }
     ],
-    "stamp": "오늘의 발행 완료",
+    "stamp": "이번 주 발행 완료",
     "restart": "처음부터 다시 보기 ↺",
     "sources": [
-      "TechCrunch",
+      "The Quantum Insider",
+      "Quantum Computing Report",
+      "Phys.org",
+      "Physics World",
       "지디넷코리아",
-      "GeekNews",
-      "The Verge",
-      "인공지능신문",
-      "AI타임스"
+      "동아사이언스"
     ]
   }
 }

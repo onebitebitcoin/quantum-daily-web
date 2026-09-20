@@ -105,18 +105,18 @@ jobs:
         run: |
           set -euo pipefail
           for i in $(seq 1 15); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' localhost:8021/health || true)
+            code=$(curl -s -o /dev/null -w '%{http_code}' localhost:8022/health || true)
             [ "$code" = "200" ] && break
             [ "$i" = "15" ] && { echo "health 가 200 이 아니다: $code"; exit 1; }
             sleep 2
           done
 
-          html=$(curl -fsS localhost:8021/ai/)
-          assets=$(printf '%s' "$html" | grep -oE '/ai/assets/[A-Za-z0-9_.-]+' | sort -u)
+          html=$(curl -fsS localhost:8022/quantum/)
+          assets=$(printf '%s' "$html" | grep -oE '/quantum/assets/[A-Za-z0-9_.-]+' | sort -u)
           [ -n "$assets" ] || { echo "index.html 에서 자산 경로를 못 찾았다"; exit 1; }
 
           for a in $assets; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "localhost:8021$a")
+            code=$(curl -s -o /dev/null -w '%{http_code}' "localhost:8022$a")
             echo "$code  $a"
             [ "$code" = "200" ] || { echo "자산이 200 이 아니다"; exit 1; }
           done

@@ -9,7 +9,7 @@ const monthLabel = (date: Date) => `${date.getFullYear()}년 ${date.getMonth() +
 
 // Day 1 and day 2 exist in every month, so these are safe regardless of when the test runs.
 const publishedDate = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`;
-const editions = [{ date: publishedDate, slug: 'ai-daily-01', title: 'AI 하이라이트' }];
+const editions = [{ date: publishedDate, slug: 'quantum-daily-01', title: '양자 하이라이트' }];
 
 function mockFetch(data: unknown, status = 200) {
   const fn = vi.fn().mockResolvedValue({

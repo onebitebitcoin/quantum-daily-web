@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# ai-daily-web DB 일일 백업.
+# quantum-daily-web DB 일일 백업.
 #
 # 발행 데이터는 재생성이 불가능하다 — 수집 소스(my-news/my-youtube)는 24시간 창만
 # 보여주고, Q&A는 Gemini 유료 호출 결과다. 볼륨 하나에만 있는 상태로 두지 않는다.
 #
 # crontab 등록 (기존 stackhealth 스크립트와 같은 형식):
-#   30 4 * * * /bin/bash /home/measly/ai-daily-web/deploy/backup.sh >> /home/measly/.claude/logs/ai-daily-backup.log 2>&1
+#   30 4 * * * /bin/bash /home/measly/quantum-daily-web/deploy/backup.sh >> /home/measly/.claude/logs/quantum-daily-backup.log 2>&1
 #
 # 복구:
-#   gunzip -c ~/backups/ai-daily/ai-daily-2026-08-26.sql.gz \
+#   gunzip -c ~/backups/quantum-daily/ai-daily-2026-08-26.sql.gz \
 #     | docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKUP_DIR="${AI_DAILY_BACKUP_DIR:-$HOME/backups/ai-daily}"
+BACKUP_DIR="${QUANTUM_DAILY_BACKUP_DIR:-$HOME/backups/quantum-daily}"
 RETENTION_DAYS=14
 
 # cron은 PATH가 빈약하다. compose 플러그인이 붙은 CLI를 절대경로로 잡는다.
@@ -35,7 +35,7 @@ set +a
 : "${POSTGRES_DB:?.env에 POSTGRES_DB 없음}"
 
 mkdir -p "$BACKUP_DIR"
-target="$BACKUP_DIR/ai-daily-$(date +%F).sql.gz"
+target="$BACKUP_DIR/quantum-daily-$(date +%F).sql.gz"
 
 # 부분 파일이 정상 백업으로 남지 않도록 임시 파일에 받고 성공 시에만 옮긴다.
 tmp="$(mktemp "$target.XXXXXX")"

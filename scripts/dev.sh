@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Dev server launcher. Ports are FIXED, do not change:
-#   backend 8003, frontend 5176
+#   backend 8003, frontend 5177
 # — 5173/5175/8000/8001/8002/23456 are already used by other projects on this machine
 # (my-academy/btc-daily-web/my-news/exchange-fee/my-youtube).
 #
@@ -12,14 +12,14 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 run_backend() {
   cd "$repo_root/backend"
   source .venv/bin/activate
-  exec uvicorn app.main:app --port 8003 --reload
+  exec uvicorn app.main:app --port 8004 --reload
 }
 
 run_frontend() {
   cd "$repo_root/frontend"
   # --host 를 빼면 [::1] 에만 붙어서 테일스케일 주소로는 안 열린다.
   # MagicDNS 이름으로 붙을 때 필요한 allowedHosts 는 vite.config.ts 에 있다.
-  exec npx vite --port 5176 --strictPort --host 0.0.0.0
+  exec npx vite --port 5177 --strictPort --host 0.0.0.0
 }
 
 case "${1:-both}" in

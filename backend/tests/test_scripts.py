@@ -984,11 +984,11 @@ def test_build_skeleton_generates_date_slug_title_and_sources() -> None:
     )
 
     assert skeleton["meta"] == {
-        "title": "AI 하이라이트 · 7.31",
-        "slug": "ai-daily-0731",
+        "title": "양자 하이라이트 · 7.31",
+        "slug": "quantum-daily-0731",
         "date": "2026-07-31",
     }
-    assert skeleton["cover"]["mark"] == ["7월 31일", "AI 카드뉴스"]
+    assert skeleton["cover"]["mark"] == ["7월 31일", "양자 카드뉴스"]
     assert skeleton["cover"]["meta"] == ["x", "y", "2026.07.31"]
     assert skeleton["closing"]["sources"] == ["A", "B"]
 
@@ -1222,7 +1222,7 @@ def test_collect_daily_main_writes_draft(tmp_path: Path) -> None:
 
     assert result_path == out_path
     data = json.loads(out_path.read_text(encoding="utf-8"))
-    assert data["skeleton"]["meta"]["slug"] == "ai-daily-0731"
+    assert data["skeleton"]["meta"]["slug"] == "quantum-daily-0731"
     assert data["candidates"]["news"][0]["source_ref"] == "X"
     assert data["candidates"]["videos"][0]["thumbnail_url"] == (
         "https://i.ytimg.com/vi/v1/hqdefault.jpg"
@@ -1377,7 +1377,7 @@ def test_apply_date_to_cover_derives_mark_and_meta() -> None:
         datetime.date(2026, 7, 31),
     )
 
-    assert cover["mark"] == ["7월 31일", "AI 카드뉴스"]
+    assert cover["mark"] == ["7월 31일", "양자 카드뉴스"]
     assert cover["meta"] == ["x", "y", "2026.07.31"]
 
 
@@ -1417,7 +1417,7 @@ def test_push_edition_accepts_cover_matching_meta_date(
         # 링크·이미지 검증은 바깥 네트워크를 두드린다 — 여기 관심사가 아니라 끈다.
         result = push_edition.main([str(edition_path), "--skip-link-check"], client=client)
 
-    assert result["cover"]["mark"] == ["7월 30일", "AI 카드뉴스"]
+    assert result["cover"]["mark"] == ["7월 30일", "양자 카드뉴스"]
 
 
 def test_push_edition_missing_api_key_fails(
@@ -2131,7 +2131,7 @@ def test_build_skeleton_puts_the_cover_quote_beside_the_date_fields() -> None:
 
     assert skeleton["cover"]["quote"] == quote
     # 날짜 파생 필드는 그대로여야 한다 — push_edition 의 cover 가드가 이걸 본다.
-    assert skeleton["cover"]["mark"] == ["8월 8일", "AI 카드뉴스"]
+    assert skeleton["cover"]["mark"] == ["8월 8일", "양자 카드뉴스"]
 
 
 def test_build_skeleton_omits_the_quote_key_when_there_is_none() -> None:

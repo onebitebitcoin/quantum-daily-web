@@ -4,7 +4,7 @@ import EditionPage, { LatestFeed, StatusScreen } from './EditionPage';
 
 export default function App() {
   return (
-    <BrowserRouter basename="/ai">
+    <BrowserRouter basename="/quantum">
       <Routes>
         {/* `/`는 리다이렉트하지 않는다 — 여기서 북마크해야 "항상 최신"이 된다. */}
         <Route path="/" element={<LatestFeed />} />

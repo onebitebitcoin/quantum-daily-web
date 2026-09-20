@@ -9,7 +9,7 @@ import { speakerShortName, type Cover, type CoverQuote } from './content';
 
 const COVER: Cover = {
   eyebrow: '24시간 다이제스트',
-  mark: ['8월 8일', 'AI 카드뉴스'],
+  mark: ['8월 8일', '양자 카드뉴스'],
   meta: ['최근 24시간 수집', '뉴스 + 유튜브', '2026.08.08'],
   hint: '위로 넘겨서 오늘의 AI 이슈 10건 보기',
 };

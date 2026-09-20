@@ -9,7 +9,7 @@ const INPUT = {
 };
 
 /** 이 사이트가 어느 경로에 올라가 있든 같은 기대값을 만든다.
- *  도메인 루트면 빈 문자열, 서브패스(자매 사이트의 "/ai/")면 그 접두사가 붙는다. */
+ *  도메인 루트면 빈 문자열, 서브패스(자매 사이트의 "/quantum/")면 그 접두사가 붙는다. */
 const EXPECTED_URL = `https://example.test${import.meta.env.BASE_URL.replace(/\/$/, '')}/d/2026-09-18/3`;
 
 function stubNavigator(patch: Record<string, unknown>) {
