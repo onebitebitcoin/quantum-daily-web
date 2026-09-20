@@ -8,7 +8,7 @@
 | | ai-daily-web | quantum-daily-web |
 |---|---|---|
 | 포트 | backend 8003 · frontend 5176 | **backend 8004 · frontend 5177** |
-| 컨테이너 포트 | 8021 | **8022** |
+| 컨테이너 포트 | 8021 | **8023** |
 | 소스 | `asset=ai` · 영상 `topic=AI` | **`asset=quantum` · 영상 `topic=양자컴퓨팅`** |
 | 수집 창 | 뉴스 36h · 영상 48h | **뉴스 168h · 영상 168h (7일)** |
 | 발행 주기 | 매일 06:10 | **주 1회** (수집은 매일 돌아간다) |

@@ -42,7 +42,7 @@ services:
     # 루프백에만 바인딩한다 — 0.0.0.0이면 공인 IP:8020으로 TLS/Cloudflare를 우회한
     # 평문 직결이 뚫린다. 같은 서버의 meetup-web(127.0.0.1:8000)과 동일한 관례.
     ports:
-      - "127.0.0.1:${WEB_PORT:-8022}:80"
+      - "127.0.0.1:${WEB_PORT:-8023}:80"
     depends_on:
       - backend
 

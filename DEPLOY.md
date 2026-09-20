@@ -11,7 +11,7 @@
 |---|---|
 | 도메인 | `daily.onebitecoder.com` |
 | 사람이 보는 주소 | `https://daily.onebitecoder.com/ai` (루트 `/`는 `/quantum/`로 301) |
-| 컨테이너 노출 포트 | `127.0.0.1:8022` (btc-daily-web이 8020) |
+| 컨테이너 노출 포트 | `127.0.0.1:8023` (btc-daily-web이 8020) |
 | compose 프로젝트명 | `quantum-daily-web` (디렉토리명 — btc와 갈라져 볼륨·네트워크가 안 겹친다) |
 | 서비스 | `db`(Postgres 16) · `backend`(uvicorn) · `web`(nginx) |
 
@@ -23,8 +23,8 @@
 # btc-daily-web 이 살아 있는지 — 이 배포가 끝난 뒤에도 살아 있어야 한다
 curl -s -o /dev/null -w "btc: %{http_code}\n" https://daily.onebitebitcoin.com/
 
-# 8022 이 비어 있는지. 뭔가 물려 있으면 멈추고 사람에게 물어라
-sudo lsof -iTCP:8022 -sTCP:LISTEN || echo "8022 비어 있음 (정상)"
+# 8023 이 비어 있는지. 뭔가 물려 있으면 멈추고 사람에게 물어라
+sudo lsof -iTCP:8023 -sTCP:LISTEN || echo "8023 비어 있음 (정상)"
 
 # DNS 가 이 서버를 가리키는지
 dig +short daily.onebitecoder.com
@@ -80,7 +80,7 @@ cp .env.example .env
 | `POSTGRES_PASSWORD` | `openssl rand -hex 32` | |
 | `DATABASE_URL` | 위 비밀번호를 **URL 안에도 똑같이** | 어긋나면 backend가 DB에 못 붙는다 |
 | `ADMIN_API_KEY` | **발행 머신에서 가져온 값** | 아래 경고 참고 |
-| `WEB_PORT` | `8022` | `.env.example` 기본값 그대로 |
+| `WEB_PORT` | `8023` | `.env.example` 기본값 그대로 |
 | `DOMAIN` | `daily.onebitecoder.com` | `.env.example` 기본값 그대로 |
 
 > **`ADMIN_API_KEY`를 서버에서 새로 뽑지 마라.** 발행은 개발 머신(맥)에서
@@ -118,16 +118,16 @@ backend는 기동하면서 `alembic upgrade head`를 돌린다. 마이그레이�
 **확인**
 
 ```bash
-curl -s localhost:8022/health                    # {"status":"ok"}
-curl -s localhost:8022/api/editions              # [] (아직 발행 전이라 빈 배열)
-curl -sI localhost:8022/ | grep -iE '^(HTTP|location)'
+curl -s localhost:8023/health                    # {"status":"ok"}
+curl -s localhost:8023/api/editions              # [] (아직 발행 전이라 빈 배열)
+curl -sI localhost:8023/ | grep -iE '^(HTTP|location)'
 #   → HTTP/1.1 301 / Location: /quantum/
 #   Location 이 `/quantum/` 상대 경로여야 한다. `http://…/quantum/` 절대 URL 이면
 #   absolute_redirect off 가 없는 옛 이미지다(https 가 http 로 한 번 떨어진다).
 # index.html 이 참조하는 자산을 **실제로 받아본다**. HTML 안의 경로만 grep 하면
 # 파일이 없어도 통과한다 — 2026-08-29 첫 배포가 정확히 그렇게 새어 나갔다.
-for p in $(curl -s localhost:8022/quantum/ | grep -o '/quantum/assets/[^"]*'); do
-  printf "%s -> " "$p"; curl -s -o /dev/null -w "%{http_code}\n" "localhost:8022$p"
+for p in $(curl -s localhost:8023/quantum/ | grep -o '/quantum/assets/[^"]*'); do
+  printf "%s -> " "$p"; curl -s -o /dev/null -w "%{http_code}\n" "localhost:8023$p"
 done
 #   → 모두 200. 하나라도 404 면 dist 가 html 루트에 풀린 옛 이미지다
 ```
@@ -137,10 +137,10 @@ done
 `/usr/share/nginx/html/ai` 로 넣지 않는 옛 이미지다 — 1단계로 돌아가 커밋을
 확인하고 `docker compose up -d --build`를 다시 돌려라.
 
-`web`은 `127.0.0.1`에만 바인딩된다. 공인 IP로 8022이 열려 있으면 안 된다:
+`web`은 `127.0.0.1`에만 바인딩된다. 공인 IP로 8023이 열려 있으면 안 된다:
 
 ```bash
-sudo lsof -iTCP:8022 -sTCP:LISTEN    # 127.0.0.1:8022 이어야 한다. *:8022 이면 잘못됐다
+sudo lsof -iTCP:8023 -sTCP:LISTEN    # 127.0.0.1:8023 이어야 한다. *:8023 이면 잘못됐다
 ```
 
 ---
@@ -148,7 +148,7 @@ sudo lsof -iTCP:8022 -sTCP:LISTEN    # 127.0.0.1:8022 이어야 한다. *:8022 �
 ## 4. 인그레스 + TLS (2단계)
 
 호스트 nginx(`/etc/nginx`)가 80/443과 인증서를 소유한다. 컨테이너 안의 nginx와
-역할이 다르다 — 이건 TLS 종단 + `127.0.0.1:8022` 프록시만 한다.
+역할이 다르다 — 이건 TLS 종단 + `127.0.0.1:8023` 프록시만 한다.
 
 인증서가 없는 상태로 `:443` 블록을 넣으면 `nginx -t`가 깨지므로 반드시 두 번에
 나눠 올린다.
@@ -295,7 +295,7 @@ gh run list --repo onebitebitcoin/quantum-daily-web --limit 5
 
 ```bash
 cd /home/measly/quantum-daily-web && git pull && docker compose up -d --build
-curl -s localhost:8022/health
+curl -s localhost:8023/health
 ```
 
 ### 러너를 다시 붙일 때
@@ -331,7 +331,7 @@ sudo ./svc.sh install measly && sudo ./svc.sh start
 - **btc-daily-web의 vhost·컨테이너·인증서를 건드리지 마라.** 같은 서버에 있지만
   완전히 별개다. `certbot --expand`로 인증서를 합치는 것도 여기 포함된다.
 - **`WEB_PORT`를 8020으로 바꾸지 마라.** btc-daily-web이 쓰고 있다.
-- **`web` 서비스를 `0.0.0.0`에 바인딩하지 마라.** 공인 IP:8022로 TLS와
+- **`web` 서비스를 `0.0.0.0`에 바인딩하지 마라.** 공인 IP:8023로 TLS와
   Cloudflare를 우회한 평문 직결이 뚫린다.
 - **`.env` 값을 로그나 터미널에 출력하지 마라.** 있는지 없는지만 확인한다.
 - **`--skip-link-check`로 발행하지 마라.** 링크·이미지 검증은 켜 두는 게 기본이다.
