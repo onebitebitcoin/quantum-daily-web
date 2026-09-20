@@ -35,7 +35,13 @@ export interface Card {
   body: string;
   quote: string | null;
   link: { label: string; href: string } | null;
-  media: { image: string; href: string | null; cta: string | null } | null;
+  media: {
+    image: string;
+    href: string | null;
+    cta: string | null;
+    /** 기사 사진이 아니라 삽화일 때의 출처 표기. 그림 위에 작게 얹는다. */
+    credit?: string | null;
+  } | null;
   qa?: { question: string; answer: string; sources: string[] }[] | null;
 }
 
