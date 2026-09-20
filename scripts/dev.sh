@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Dev server launcher. Ports are FIXED, do not change:
-#   backend 8003, frontend 5177
+#   backend 8004, frontend 5177
 # — 5173/5175/8000/8001/8002/23456 are already used by other projects on this machine
 # (my-academy/btc-daily-web/my-news/exchange-fee/my-youtube).
 #
