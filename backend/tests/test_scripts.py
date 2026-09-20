@@ -351,6 +351,54 @@ def test_filter_news_excludes_duplicates() -> None:
     assert result[0]["is_duplicate"] is False
 
 
+def test_filter_news_caps_how_much_one_source_can_take() -> None:
+    """arXiv 가 하루 70편을 쏟아내도 후보를 독식하면 안 된다.
+
+    소스가 10곳뿐이라 상한이 없으면 논문이 후보 100칸 중 41칸을 먹고 이미지
+    보유율이 87%에서 43%로 떨어진다(2026-09-20 실측).
+    """
+    flood = [
+        make_news(source="arxivquantph", url=f"a{i}", title=f"Paper about entanglement {i}")
+        for i in range(collect_daily.SOURCE_CAP + 20)
+    ]
+    others = [
+        make_news(source="quantumreport", url=f"q{i}", title=f"Funding round {i}")
+        for i in range(10)
+    ]
+
+    result = collect_daily.filter_news(flood + others, NOW)
+
+    assert sum(1 for n in result if n["source"] == "arxivquantph") == collect_daily.SOURCE_CAP
+    assert sum(1 for n in result if n["source"] == "quantumreport") == 10
+
+
+def test_filter_news_excludes_items_published_before_the_window() -> None:
+    """보관 창이 긴 소스를 처음 크롤하면 과거 기사가 전부 "방금 수집됨"이 된다.
+
+    Physics World 피드 하나가 444일치 160건을 들고 있다 — 수집 시각만 보면
+    2025년 노벨상 회고가 이번 주 후보로 올라온다 (2026-09-20 첫 수집 실측:
+    후보 100건 중 37건이 게시 기준으로 창 밖이었다).
+    """
+    # my-news 의 published_at 은 오프셋이 없다 — 이 형태 그대로 시험해야 의미가 있다.
+    items = [
+        make_news(source_ref="archive", crawled_at=NOW.isoformat(),
+                  published_at="2025-10-09T00:00:00"),
+        make_news(source_ref="fresh", crawled_at=NOW.isoformat(),
+                  published_at="2026-07-30T00:00:00"),
+    ]
+
+    result = collect_daily.filter_news(items, NOW)
+
+    assert [n["source_ref"] for n in result] == ["fresh"]
+
+
+def test_filter_news_keeps_items_without_a_published_at() -> None:
+    """게시 시각을 안 주는 소스를 통째로 버리면 안 된다 — 있는 정보로만 거른다."""
+    items = [make_news(source_ref="no-pub", crawled_at=NOW.isoformat(), published_at=None)]
+
+    assert [n["source_ref"] for n in collect_daily.filter_news(items, NOW)] == ["no-pub"]
+
+
 def test_filter_news_excludes_items_older_than_the_window() -> None:
     inside = NOW - datetime.timedelta(hours=collect_daily.NEWS_WINDOW_HOURS - 1)
     outside = NOW - datetime.timedelta(hours=collect_daily.NEWS_WINDOW_HOURS + 1)
@@ -657,17 +705,17 @@ def test_trending_article_urls_dedupes_and_stops_at_the_priority_cutoff() -> Non
 # ---- collect_daily.physics_topups / 산업 예약 자리 ----
 
 
-def test_physics_topups_keeps_only_industry_tier() -> None:
-    """ai 등급은 일부러 버린다 — 이 피드는 asset 필터가 없어 대부분 비트코인·일반 뉴스다."""
+def test_physics_topups_keeps_only_the_physics_tier() -> None:
+    """quantum 등급은 일부러 버린다 — 그쪽은 asset=quantum 피드가 이미 주워 온다."""
     items = [
-        make_news(url="i", title="엔비디아 HBM 공급 부족, 삼성 파운드리 증설"),
+        make_news(url="p", title="초전도 박막의 극저온 특성을 희석냉동기로 측정"),
         make_news(url="b", title="비트코인 8만달러 회복", tags="['ai']"),
-        make_news(url="a", title="오픈AI 새 모델 공개"),
+        make_news(url="q", title="아이온큐 256큐비트 공개"),
     ]
 
     result = collect_daily.physics_topups(items, NOW)
 
-    assert [n["url"] for n in result] == ["i"]
+    assert [n["url"] for n in result] == ["p"]
 
 
 def test_physics_topups_skips_urls_already_in_the_base_feed() -> None:

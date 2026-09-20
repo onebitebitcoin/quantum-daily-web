@@ -90,6 +90,12 @@ TRENDING_WINDOW_HOURS = 168
 # 먹어(2026-08-26 드라이런: 36h ai 등급 251건) 산업이 한 건도 못 올라온다 — 카드가
 # 반도체·전력 각도를 쓸 수 있으려면 후보에 보이기부터 해야 한다.
 PHYSICS_RESERVE = 12
+# 한 소스가 후보를 독식하지 못하게 거는 상한. my-youtube 의 cap_per_channel 과
+# 같은 장치다. ai-daily-web 에는 없다 — 거기는 googlenews 경유 매체가 54곳이라
+# 저절로 흩어졌다. 여기는 소스가 10곳뿐이고 그중 arXiv 가 하루 70편을 쏟아낸다:
+# 상한이 없으면 후보 100칸 중 41칸을 논문이 먹고 이미지 보유율이 87%에서 43%로
+# 떨어진다(2026-09-20 실측). 논문을 버리는 게 아니라 제 몫만 갖게 하는 것이다.
+SOURCE_CAP = 15
 
 # 후보의 AI 관련도 등급. 앞에 올수록 먼저 후보 자리를 가져간다.
 # 카드는 AI 온리가 1순위이고, 물량이 모자라면 크립토·일반 테크 소재 대신
@@ -143,9 +149,13 @@ PHYSICS_TERMS = (
     "스핀트로닉스", "spintronic", "응집물질", "condensed matter",
     "원자시계", "atomic clock", "냉각원자", "cold atom", "보스-아인슈타인",
     "중성미자", "neutrino", "입자가속기", "accelerator", "cern", "lhc",
-    "반도체", "semiconductor", "파운드리", "foundry", "웨이퍼",
-    "표준연", "kriss", "국가 양자", "national quantum", "chips act",
+    "표준연", "kriss", "국가 양자", "national quantum",
 )
+# 반도체·파운드리·웨이퍼는 일부러 뺐다. ai-daily-web 에서는 이 낱말들이 "AI 를
+# 굴리는 물리적 비용"이라 2순위의 핵심이었지만, 여기서는 AI 칩 시황을 그대로
+# 끌고 온다 — 2026-09-20 수집 실측에서 물리 예약분 12칸이 "AI 속도조절론에도
+# 반도체 시장 1조6000억달러 돌파", "오픈AI 반도체 개발 수장 삼성 강연" 같은
+# 기사로 찼다. 양자 칩 기사는 QUANTUM_TERMS 쪽에서 이미 잡힌다.
 
 
 # 매체 간 사건 클러스터링. 2026-08-26 드라이런에서 오픈AI 할라페뇨 칩 발표 한 건이
@@ -832,6 +842,53 @@ def physics_topups(
     return picked
 
 
+def _cap_per_source(items: list[dict[str, Any]], cap: int = SOURCE_CAP) -> list[dict[str, Any]]:
+    """소스 하나가 후보에서 가져갈 수 있는 몫을 cap 개로 묶는다. 입력 순서는 보존한다.
+
+    잘린 항목은 버려지는 게 아니라 이번 호 후보에서만 빠진다 — 다음 수집에서
+    다시 심사된다(my-youtube 의 cap_per_channel 과 같은 취지).
+    """
+    seen: dict[str, int] = {}
+    kept: list[dict[str, Any]] = []
+    for n in items:
+        key = str(n.get("source") or n.get("source_ref") or "")
+        if seen.get(key, 0) >= cap:
+            continue
+        seen[key] = seen.get(key, 0) + 1
+        kept.append(n)
+    return kept
+
+
+def _within_news_window(news: dict[str, Any], cutoff: datetime.datetime) -> bool:
+    """수집 시각과 **게시 시각**을 둘 다 창 안으로 요구한다.
+
+    ai-daily-web 은 수집 시각만 봤다. 소스가 전부 롤링 피드라 둘이 거의 같았기
+    때문이다. 이쪽은 보관 창이 긴 소스를 쓴다 — Physics World 피드 하나가 444일치
+    160건을 들고 있어서, 처음 크롤한 날에는 그 전부가 "방금 수집됨"이 된다.
+    수집 시각만 보면 2025년 노벨상 회고 기사가 이번 주 후보로 올라온다
+    (2026-09-20 첫 수집 실측: 후보 100건 중 37건이 게시 기준으로 창 밖이었다).
+
+    게시 시각이 없는 항목은 예전처럼 수집 시각만으로 판단한다 — 있는 정보로만
+    거른다. 없다고 버리면 게시 시각을 안 주는 소스가 통째로 빠진다.
+    """
+    crawled = news.get("crawled_at")
+    if not crawled or _parse_dt(crawled) < cutoff:
+        return False
+    published = news.get("published_at")
+    if not published:
+        return True
+    try:
+        at = _parse_dt(published)
+    except ValueError:
+        return True  # 못 읽는 형식은 수집 시각만으로 판단한다
+    # my-news 의 published_at 은 오프셋이 없는 UTC 문자열이다("2026-09-20T05:08:00").
+    # 그대로 비교하면 aware 인 cutoff 와 TypeError 가 나고, 그걸 삼키면 창 밖
+    # 기사가 조용히 통과한다 — 2026-09-20 에 실제로 2025년 기사가 후보에 남았다.
+    if at.tzinfo is None:
+        at = at.replace(tzinfo=datetime.UTC)
+    return at >= cutoff
+
+
 def filter_news(
     items: list[dict[str, Any]],
     now: datetime.datetime,
@@ -887,11 +944,12 @@ def filter_news(
     fresh = [
         {**n, "relevance": classify_relevance(n)}
         for n in items
-        if not n.get("is_duplicate") and _parse_dt(n["crawled_at"]) >= cutoff
+        if not n.get("is_duplicate") and _within_news_window(n, cutoff)
     ]
     # 상한(NEWS_LIMIT)을 세기 **전에** 접는다 — 접고 세야 "서로 다른 사건 100건"이
     # 된다. 접기 전에 자르면 상위 칸을 같은 사건이 나눠 먹은 채로 잘린다.
     fresh = collapse_events(fresh)
+    fresh = _cap_per_source(fresh)
 
     by_tier = {tier: [n for n in fresh if n["relevance"] == tier] for tier in RELEVANCE_TIERS}
     # quantum 이 상한을 다 먹지 않도록, 실제로 있는 만큼만 물리 자리를 떼어둔다.
