@@ -46,6 +46,7 @@ FIXTURE_CONTENT = REPO_ROOT / "frontend" / "src" / "fixtures" / "content.json"
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
+from app.imgproxy import BROWSER_UA  # noqa: E402
 from app.quotes import as_cover_quote, is_exhausted, load_pool, pick_quote  # noqa: E402
 from app.trending import rank_topics  # noqa: E402  (sys.path 조정 후여야 함)
 from scripts.recent_editions import fetch_dates, fetch_edition  # noqa: E402
@@ -354,10 +355,8 @@ def get_image_hash(client: httpx.Client, url: str, cache: dict[str, int]) -> int
 GOOGLE_NEWS_ARTICLE = "https://news.google.com/rss/articles/"
 GOOGLE_NEWS_RPC = "https://news.google.com/_/DotsSplashUi/data/batchexecute"
 # 구글은 브라우저 UA 가 아니면 인터스티셜에 서명을 심어주지 않는다.
-BROWSER_UA = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-)
+# UA 는 `app/imgproxy.py` 와 한 값을 쓴다 — 기사 페이지는 받아지는데 그 페이지가
+# 띄운 이미지는 프록시가 못 받는 어긋남을 막는다.
 SOURCE_FETCH_TIMEOUT = 12.0
 # 동시 요청 수. 5 면 이미지 없는 후보 59건이 실측 15초 안쪽이고 매체 한 곳에
 # 몰아치지도 않는다.

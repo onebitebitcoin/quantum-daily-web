@@ -131,3 +131,64 @@ def test_write_cache_creates_parents_and_leaves_no_tmp_file(tmp_path) -> None:
 
     assert target.read_bytes() == b"payload"
     assert list(target.parent.glob("*.tmp")) == []
+
+
+# ---- fetch_source 요청 헤더 ----
+
+
+class _FakeStream:
+    """httpx.stream 의 컨텍스트 매니저 자리를 대신한다."""
+
+    def __init__(self, payload: bytes) -> None:
+        self._payload = payload
+        self.headers: dict[str, str] = {}
+
+    def __enter__(self) -> "_FakeStream":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def iter_bytes(self):  # noqa: ANN201 - httpx 인터페이스를 그대로 흉내 낸다
+        yield self._payload
+
+
+def test_fetch_source_presents_a_browser_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """일부 매체가 기본 UA(python-httpx/x.y)를 403으로 막는다.
+
+    2026-09-20 실측: thequantuminsider.com 이 그렇게 막아 카드 이미지가 502로 깨졌다.
+    같은 URL도 브라우저 UA면 200을 준다. 수집 단계는 이미 같은 UA를 쓴다.
+    """
+    captured: dict[str, object] = {}
+
+    def fake_stream(method: str, url: str, **kwargs: object) -> _FakeStream:
+        captured["method"] = method
+        captured["url"] = url
+        captured["headers"] = kwargs.get("headers")
+        return _FakeStream(b"payload")
+
+    monkeypatch.setattr(imgproxy.httpx, "stream", fake_stream)
+
+    assert imgproxy.fetch_source("https://cdn.example/a.jpg") == b"payload"
+
+    headers = captured["headers"]
+    assert headers is not None, "fetch_source 가 헤더를 보내지 않는다"
+    assert "Mozilla/5.0" in headers["User-Agent"]
+    assert "python-httpx" not in headers["User-Agent"]
+
+
+def test_fetch_source_accepts_images(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Accept 가 */* 뿐이면 이미지 대신 HTML 안내 페이지를 주는 CDN이 있다."""
+    captured: dict[str, object] = {}
+
+    def fake_stream(method: str, url: str, **kwargs: object) -> _FakeStream:
+        captured["headers"] = kwargs.get("headers")
+        return _FakeStream(b"payload")
+
+    monkeypatch.setattr(imgproxy.httpx, "stream", fake_stream)
+    imgproxy.fetch_source("https://cdn.example/a.jpg")
+
+    assert "image/" in captured["headers"]["Accept"]
