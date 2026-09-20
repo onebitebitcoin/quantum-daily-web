@@ -8,9 +8,10 @@ quantum-daily-web → quantum-weekly-web 전면 개명.
 
 - [x] Phase 2: 로컬 디렉토리 rename + launchd 재등록
 
+- [x] Phase 3: GitHub 저장소 rename + 로컬 remote 갱신
+
 ## 현재 진행 중
-- [ ] Phase 3: GitHub 저장소 rename + 로컬 remote 갱신
+- [ ] Phase 4: 서버 디렉토리·러너 rename (사람이 SSH 로)
 
 ## 남은 Phase
-- [ ] Phase 4: 서버 디렉토리·러너 rename (사람이 SSH 로)
 - [ ] Phase 5: 마무리 확인 및 PROGRESS.md 정리
