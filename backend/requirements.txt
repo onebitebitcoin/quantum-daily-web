@@ -1,0 +1,12 @@
+alembic==1.18.5
+fastapi==0.141.1
+httpx==0.28.1
+Pillow==11.1.0
+psycopg2-binary==2.9.10
+pydantic==2.13.4
+pydantic-settings==2.14.2
+pytest==9.1.1
+pytest-cov==7.1.0
+ruff==0.16.0
+SQLAlchemy==2.0.51
+uvicorn[standard]==0.52.0

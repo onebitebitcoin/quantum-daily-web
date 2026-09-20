@@ -1,0 +1,122 @@
+name: "CI"
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+  # push 이벤트가 유실돼 배포가 안 나가는 일이 있었다(8/6 푸시는 워크플로가
+  # 생성되지 않았다). 수동으로 같은 파이프라인을 다시 돌릴 수 있게 열어둔다.
+  workflow_dispatch:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v7
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: "Install dependencies"
+        run: pip install -r requirements.txt
+
+      - name: "Ruff lint"
+        run: ruff check .
+
+      # .env 없이 도는 환경 — config가 로컬 SQLite 기본값으로 떨어진다.
+      - name: "Pytest"
+        run: pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v7
+
+      - name: "Setup Node"
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: "Install dependencies"
+        run: npm ci
+
+      - name: "Lint"
+        run: npm run lint
+
+      - name: "Test"
+        run: npm run test
+
+      - name: "Build"
+        run: npm run build
+
+  deploy:
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # 이 저장소에 등록된 repo 스코프 러너다(measly-ai-daily,
+    # /home/measly/actions-runner-ai-daily). 라벨을 btc-daily-web 으로 두면 남의
+    # 프로젝트 디렉토리를 배포하게 되므로 반드시 ai-daily-web 이어야 한다.
+    runs-on: [self-hosted, ai-daily-web]
+    timeout-minutes: 10
+    # 푸시가 연달아 나면 뒤엣것이 앞엣것의 rebuild 중간에 컨테이너를 갈아끼운다.
+    concurrency:
+      group: deploy-ai-daily-web
+      cancel-in-progress: false
+
+    steps:
+      # self-hosted 러너가 이미 /home/measly/ai-daily-web 에서 도는 컨테이너와 같은
+      # 서버에 있다 — actions/checkout 으로 별도 워크스페이스에 받지 않고 배포용 클론
+      # 디렉토리를 직접 최신화한다 (.env·볼륨이 거기 있다).
+      - name: "Deploy (pull + rebuild + restart)"
+        run: |
+          set -euo pipefail
+          cd /home/measly/ai-daily-web
+          git fetch origin main
+          git pull --ff-only origin main
+          docker compose build backend web
+          docker compose up -d backend web
+
+      # 깨진 배포에 초록불이 나가지 않게 한다. 자산을 **실제로 GET 해서** 200 을
+      # 본다 — HTML 안의 경로만 grep 하면 파일이 없어도 통과한다(2026-08-29 첫
+      # 배포가 정확히 그렇게 새어 나갔다. DEPLOY.md 3 절과 같은 검사다).
+      - name: "Verify"
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 15); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' localhost:8021/health || true)
+            [ "$code" = "200" ] && break
+            [ "$i" = "15" ] && { echo "health 가 200 이 아니다: $code"; exit 1; }
+            sleep 2
+          done
+
+          html=$(curl -fsS localhost:8021/ai/)
+          assets=$(printf '%s' "$html" | grep -oE '/ai/assets/[A-Za-z0-9_.-]+' | sort -u)
+          [ -n "$assets" ] || { echo "index.html 에서 자산 경로를 못 찾았다"; exit 1; }
+
+          for a in $assets; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "localhost:8021$a")
+            echo "$code  $a"
+            [ "$code" = "200" ] || { echo "자산이 200 이 아니다"; exit 1; }
+          done

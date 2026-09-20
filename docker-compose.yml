@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      # 아래 볼륨 경로. app/config.py 의 기본값은 로컬 개발용(backend/.cache/*)이라
+      # 컨테이너에서는 여기서 명시적으로 덮어써야 볼륨에 캐시가 쌓인다.
+      OG_CACHE_DIR: /data/og
+      IMG_CACHE_DIR: /data/img
+    volumes:
+      - og_cache:/data/og
+      # 변환한 카드 이미지. 볼륨이 없으면 배포마다 캐시가 날아가 원본을
+      # 전부 다시 받아 재변환한다.
+      - img_cache:/data/img
+    # 기동 직후 alembic이 붙어야 하므로 "started"가 아니라 "healthy"를 기다린다.
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    # 호스트 nginx(daily.onebitecoder.com, TLS)가 이 포트로 프록시한다.
+    # 80/443은 호스트 nginx가 이미 쓰고 있으므로 여기서 바인딩하지 않는다.
+    # 루프백에만 바인딩한다 — 0.0.0.0이면 공인 IP:8020으로 TLS/Cloudflare를 우회한
+    # 평문 직결이 뚫린다. 같은 서버의 meetup-web(127.0.0.1:8000)과 동일한 관례.
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8021}:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  og_cache:
+  img_cache:
