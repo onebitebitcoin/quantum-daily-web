@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  quantum-daily-web 발행 스케줄. **주 1회**, 일요일 07:10 KST 다.
+  이 파일은 개발 머신(맥)에 설치한다 — 수집 소스(my-news :8000, my-youtube :23456)가
+  맥에만 있어서, 수집과 문구작성은 맥에서 하고 완성된 에디션만 발행처로 POST 한다.
+
+    cp deploy/com.nsw.quantum-weekly.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.nsw.quantum-weekly.plist
+
+  요일을 일요일(Weekday 0)로 둔 것은 한 주를 닫고 여는 자리라 읽히기 좋아서다.
+  바꾸려면 Weekday 만 고친다 (0=일 … 6=토).
+  07:10 은 같은 날 도는 수집(06:40)이 끝난 뒤다.
+
+  주 1회라 후보 풀이 24~129건이다. 매일 발행하면 14~17건에서 10장을 골라야 해
+  선택비가 1.5:1 밖에 안 된다 (2026-09-20 실측).
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.nsw.quantum-weekly</string>
+
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/zsh</string>
+		<string>/Users/nsw/meeting_room/lab/quantum-daily-web/scripts/weekly-cron.sh</string>
+	</array>
+
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Weekday</key>
+		<integer>0</integer>
+		<key>Hour</key>
+		<integer>7</integer>
+		<key>Minute</key>
+		<integer>10</integer>
+	</dict>
+
+	<key>RunAtLoad</key>
+	<false/>
+
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/Users/nsw/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>HOME</key>
+		<string>/Users/nsw</string>
+		<!-- /quantum 배포 후 프로덕션 주소로 바꾼다 -->
+		<key>QUANTUM_DAILY_API</key>
+		<string>http://localhost:8004</string>
+	</dict>
+
+	<key>StandardOutPath</key>
+	<string>/Users/nsw/meeting_room/lab/quantum-daily-web/logs/weekly-launchd.out</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/nsw/meeting_room/lab/quantum-daily-web/logs/weekly-launchd.err</string>
+</dict>
+</plist>

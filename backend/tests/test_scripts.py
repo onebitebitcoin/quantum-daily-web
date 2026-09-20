@@ -202,7 +202,9 @@ def test_event_signature_drops_the_domain_word_quantum() -> None:
     무관한 기사가 이 한 낱말로 이어진다 (2026-09-20 실측: "PQC 제조업 전망"과
     "초유체 큐비트"가 한 군이 됐고, 접힌 건수가 83건·최대 군 9매체였다).
     """
-    sig = collect_daily._event_signature({"title": "Superfluid qubit could scale up quantum computers"})
+    sig = collect_daily._event_signature(
+        {"title": "Superfluid qubit could scale up quantum computers"}
+    )
 
     assert "W:quantum" not in sig
     assert "W:computers" not in sig
@@ -616,7 +618,9 @@ def test_filter_news_fills_quantum_before_physics_before_other() -> None:
         crawled_at="2026-07-31T02:50:00+00:00",
     )
     ai = make_news(
-        source_ref="quantum", title="아이온큐 256큐비트 공개", crawled_at="2026-07-31T02:45:00+00:00"
+        source_ref="quantum",
+        title="아이온큐 256큐비트 공개",
+        crawled_at="2026-07-31T02:45:00+00:00",
     )
 
     result = collect_daily.filter_news([other, industry, ai], NOW)
