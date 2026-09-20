@@ -194,6 +194,33 @@ def test_cluster_events_does_not_chain_through_a_middle_article() -> None:
     ]
 
 
+def test_event_signature_drops_the_domain_word_quantum() -> None:
+    """'quantum' 은 이 코퍼스 제목의 53%에 들어 있어 사건을 특정하지 못한다.
+
+    ai-daily-web 에는 이 방어가 없다 — 거기서는 도메인 낱말이 "ai" 두 글자라
+    앵커 정규식([a-z]{3,})에 애초에 안 걸렸다. 'quantum' 은 일곱 글자라 그냥 두면
+    무관한 기사가 이 한 낱말로 이어진다 (2026-09-20 실측: "PQC 제조업 전망"과
+    "초유체 큐비트"가 한 군이 됐고, 접힌 건수가 83건·최대 군 9매체였다).
+    """
+    sig = collect_daily._event_signature({"title": "Superfluid qubit could scale up quantum computers"})
+
+    assert "W:quantum" not in sig
+    assert "W:computers" not in sig
+    assert "W:could" not in sig
+    assert "W:superfluid" in sig  # 사건을 특정하는 낱말은 남는다
+    assert "W:qubit" in sig
+
+
+def test_unrelated_quantum_articles_do_not_collapse_into_one_event() -> None:
+    """도메인 낱말만 공유하는 두 기사는 같은 사건이 아니다."""
+    a = {"title": "PQC predicts quantum computing could reshape manufacturing by 2030",
+         "url": "https://example.com/a", "source_ref": "A"}
+    b = {"title": "Superfluid qubit could help scale up quantum computers",
+         "url": "https://example.com/b", "source_ref": "B"}
+
+    assert len(collect_daily.cluster_events([a, b])) == 2
+
+
 def test_collapse_events_promotes_the_group_member_that_has_an_image() -> None:
     """이미지는 대표를 바꿔서 얻는다 — 다른 매체 이미지를 가져다 붙이지 않는다."""
     first = event_news(

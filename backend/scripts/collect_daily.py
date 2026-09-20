@@ -182,6 +182,18 @@ EVENT_EN_STOPWORDS = frozenset(
         "are", "was", "has", "have", "after", "into", "out", "not", "but", "you",
         "your", "who", "why", "all", "can", "may", "will", "more", "than", "about",
         "over", "under", "said", "says", "amid", "top", "now", "one", "two",
+        # ── 양자 도메인 불용어 ────────────────────────────────────────────
+        # ai-daily-web 에는 이 줄이 없다. 거기서는 도메인 낱말이 "ai" 두 글자라
+        # 앵커 정규식(_EVENT_LATIN = [a-z]{3,})에 애초에 안 걸렸기 때문이다.
+        # "quantum" 은 일곱 글자라 모든 제목에서 앵커가 되고, 그대로 두면 서로
+        # 무관한 기사가 이 한 낱말로 이어져 한 덩어리가 된다 — 2026-09-20 후보
+        # 100건 실측에서 'quantum' 이 53건(53%)에 들어 있었고, "PQC 제조업 전망"
+        # 과 "초유체 큐비트"가 한 군으로 묶였다. 다음으로 흔한 낱말이 8% 라
+        # 이 낱말만 확실한 이상치다.
+        "quantum", "computing", "computer", "computers",
+        # 연구 기사 정형구. 사건을 특정하지 못하면서 여러 제목에 공통으로 붙는다.
+        "researchers", "scientists", "physicists", "team", "study", "finds",
+        "find", "shows", "reveals", "could", "use", "using", "help", "first",
     }
 )
 _EVENT_BRACKET = re.compile(r"\[[^\]]*\]")
