@@ -40,6 +40,36 @@ STOPWORDS: set[str] = {
     "시장분석",
     "미국",
     "한국",
+    # ── 양자 도메인 일반어 ────────────────────────────────────────────
+    # asset=quantum 피드는 이미 한 번 걸러져 들어오므로 이 낱말들이 거의 모든
+    # 기사에 붙는다. 2026-09-20 집계 실측: "quantum" 이 499건 전부에 걸려
+    # heat 100 을 먹었고, 상위 12개 토픽이 quantum·양자컴퓨팅·research·physics
+    # 처럼 무엇이 있었는지 전혀 알려주지 않는 낱말로 찼다.
+    # 키는 소문자·공백제거로 정규화되므로 "quantum computing" 은 붙여 적는다.
+    "quantum",
+    "양자",
+    "양자컴퓨팅",
+    "양자컴퓨터",
+    "quantumcomputing",
+    "quantumphysics",
+    "quantummechanics",
+    "quantumtechnology",
+    "quant-ph",
+    "quantph",
+    "physics",
+    "물리",
+    "물리학",
+    "research",
+    "연구",
+    "science",
+    "과학",
+    # 양자 매체가 RSS 카테고리로 쓰는 값. 사건이 아니라 분류함 이름이다.
+    "quantumresearchnews",
+    "deeptech",
+    "sponsored",
+    "uncategorized",
+    "news",
+    "뉴스",
 }
 
 # 표기만 다른 같은 토픽을 하나로 합친다. 키는 소문자 + 공백 제거로 정규화해서
