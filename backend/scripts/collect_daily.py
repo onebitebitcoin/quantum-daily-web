@@ -50,10 +50,10 @@ from app.quotes import as_cover_quote, is_exhausted, load_pool, pick_quote  # no
 from app.trending import rank_topics  # noqa: E402  (sys.path 조정 후여야 함)
 from scripts.recent_editions import fetch_dates, fetch_edition  # noqa: E402
 
-DEFAULT_NEWS_URL = "http://localhost:8000/api/news?asset=ai&limit=500"
+DEFAULT_NEWS_URL = "http://localhost:8000/api/news?asset=quantum&limit=500"
 # 트렌딩 집계는 카드 후보와 목적이 다르다 — 카드는 "쓸 만한 10건"을 고르지만
 # 집계는 24시간에 무슨 일이 있었는지 전부 봐야 한다. 같은 소스를 따로, 넓게 받는다.
-DEFAULT_TRENDING_NEWS_URL = "http://localhost:8000/api/news?asset=ai&limit=500"
+DEFAULT_TRENDING_NEWS_URL = "http://localhost:8000/api/news?asset=quantum&limit=500"
 # 산업 보강 풀. my-news 의 asset=ai 는 반도체·전력 기사를 상당수 놓친다 — 디일렉·
 # 올포칩·에너지경제처럼 "AI" 를 제목에 안 쓰고 HBM·파운드리·전력망만 말하는 매체가
 # 그렇다. 그래서 asset 필터 없이 한 번 더 받되 **physics 등급만** 취한다.
@@ -72,12 +72,20 @@ DEFAULT_EDITION_API = "https://daily.onebitecoder.com"
 # 카드 후보 뉴스 창. 트렌딩 집계 창(24h)과 다르다 — 집계는 "그날 무슨 일이
 # 있었나"라서 하루로 잘라야 맞지만, 카드 후보는 고를 게 많을수록 좋다.
 # 영상 창(VIDEO_WINDOW_HOURS)이 이미 48h 인 것과 같은 취지다.
-NEWS_WINDOW_HOURS = 36
+# 주간 발행이라 창도 7일이다. 하루 창으로 자르면 후보가 14~17건이라 10장을 고르는
+# 선택비가 1.5:1 밖에 안 된다(2026-09-20 실측). 한 주를 모으면 24~129건이 된다.
+NEWS_WINDOW_HOURS = 168
 # 후보 수. **클러스터링 이후** 기준이다 — cluster_events 가 같은 사건을 접은 다음
 # 세므로, 여기서 100 이면 서로 다른 사건 100건을 뜻한다. 2026-08-26 드라이런에서
 # 클러스터링 없이 100 을 세었더니 실제 사건은 60건 남짓이었다.
 NEWS_LIMIT = 100
-NEWS_BUCKETS = 4  # 창을 4등분해 시간대별로 고르게 뽑는다
+# 창을 7등분해 **요일별로** 고르게 뽑는다. 창만 168시간으로 늘리고 4로 두면 한
+# 버킷이 42시간이라 특정 요일 기사가 몰려 들어온다.
+NEWS_BUCKETS = 7
+# 트렌딩 집계 창. ai-daily-web 에서는 카드(36h)와 집계(24h)가 달랐다 — 집계는
+# "그날 무슨 일이 있었나"라서 하루로 잘라야 맞았기 때문이다. 주간 발행에서는
+# "이번 주 무슨 일이 있었나"가 되므로 카드 창과 같은 7일을 본다.
+TRENDING_WINDOW_HOURS = 168
 # 산업 등급에 떼어두는 자리. 등급 순서대로만 채우면 ai 가 NEWS_LIMIT 을 그대로 다
 # 먹어(2026-08-26 드라이런: 36h ai 등급 251건) 산업이 한 건도 못 올라온다 — 카드가
 # 반도체·전력 각도를 쓸 수 있으려면 후보에 보이기부터 해야 한다.
@@ -184,12 +192,12 @@ _EVENT_NUMBER = re.compile(r"\d+(?:[.,]\d+)?[가-힣%a-z]*")
 
 # my-youtube 가 큐 항목에 붙이는 주제 라벨. 이 프로젝트는 이 값 하나만 본다
 # (2026-08-26 기준 큐 2,290건 중 AI 1,103 / 비트코인 1,059 / 기타 117).
-VIDEO_TOPIC = "AI"
+VIDEO_TOPIC = "양자컴퓨팅"
 # 영상 후보 수.
 VIDEO_LIMIT = 15
 # 영상 창은 게시 시각 기준 48h. 24h 로 좁히면 my-youtube 가 요약을 늦게 끝낸 영상이
 # 통째로 빠진다 — 게시 25h 뒤에 요약이 붙는 경우가 흔하다.
-VIDEO_WINDOW_HOURS = 48
+VIDEO_WINDOW_HOURS = 168
 # 영상 일간 중복배제용 발행 이력 조회 기간. 영상 후보 창(48h) + 여유 하루.
 RECENT_VIDEO_DAYS = 3
 
@@ -1007,21 +1015,21 @@ def trending_pool_news(items: list[dict[str, Any]], now: datetime.datetime) -> l
        필터지만, 집계에서는 **여러 매체가 같은 사건을 다뤘다는 사실 자체가 신호다.**
     2. 상위 20건으로 자른다. "가장 핫한 토픽"은 그날 전체를 봐야 나온다.
     """
-    cutoff = now - datetime.timedelta(hours=24)
+    cutoff = now - datetime.timedelta(hours=TRENDING_WINDOW_HOURS)
     return [n for n in items if n.get("crawled_at") and _parse_dt(n["crawled_at"]) >= cutoff]
 
 
 def trending_pool_videos(
     items: list[dict[str, Any]], now: datetime.datetime
 ) -> list[dict[str, Any]]:
-    """트렌딩 집계용 24시간 영상 코퍼스.
+    """트렌딩 집계용 7일 영상 코퍼스.
 
     filter_videos 와 달리 `summary` 를 요구하지 않는다 — 요약은 카드 문구를 쓸 때나
     필요하고, 집계에는 제목·태그·조회수면 충분하다. 요약이 아직 안 붙었다는 이유로
-    그날 화제작이 통계에서 빠지면 순위가 왜곡된다. 창도 카드(48h)와 달리 24h다 —
-    카드가 48h를 보는 건 요약 지연을 흡수하려는 것이지 신선도 기준이 아니다.
+    그날 화제작이 통계에서 빠지면 순위가 왜곡된다. 창은 카드와 같은 7일이다 — 주간 발행이라
+    "이번 주 무슨 일이 있었나"를 묻는 자리이기 때문이다.
     """
-    cutoff = now - datetime.timedelta(hours=24)
+    cutoff = now - datetime.timedelta(hours=TRENDING_WINDOW_HOURS)
     return [
         v
         for v in items

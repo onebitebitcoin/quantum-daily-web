@@ -68,7 +68,7 @@ def rotating_title(terms: list[str], i: int) -> str:
 def make_video(**overrides: Any) -> dict[str, Any]:
     base = {
         "id": "abc123",
-        "topic": "AI",
+        "topic": "양자컴퓨팅",
         "summary": "요약",
         "published_at": "2026-07-31T02:00:00+00:00",
         "added_at": "2026-07-31T02:00:00+00:00",
@@ -365,55 +365,50 @@ def test_filter_news_orders_within_a_bucket_by_recency() -> None:
     assert [n["source_ref"] for n in result] == ["newest", "middle", "oldest"]
 
 
-def test_filter_news_round_robins_evenly_across_the_four_buckets() -> None:
-    """한 구간에 기사가 쏠려 있어도 라운드로빈이라 네 구간이 같은 몫을 가져간다.
+def test_filter_news_round_robins_evenly_across_the_buckets() -> None:
+    """한 구간에 기사가 쏠려 있어도 라운드로빈이라 모든 구간이 같은 몫을 가져간다.
 
-    NOW=2026-07-31T03:00 기준 구간은 6시간씩: b0=[21:00,03:00) b1=[15:00,21:00)
-    b2=[09:00,15:00) b3=[03:00,09:00)(전날). b0 에 넉넉히, b1/b2/b3 에 각
-    NEWS_LIMIT//4 건을 두면 라운드로빈(구간당 1건씩, 0→1→2→3 순회)은 딱
-    NEWS_LIMIT//4 라운드 만에 NEWS_LIMIT 에 닿는다 — 네 구간이 정확히 같은 수를
-    내주고, b0 는 가진 것 중 가장 최신 몫만 내준다. 최종 반환은 구간끼리 시간이
-    겹치지 않으므로 구간 순서(b0→b1→b2→b3) 그대로 이어붙인 모양이 된다.
+    주간 발행이라 창이 168시간이고 NEWS_BUCKETS 가 7이라 구간 하나가 하루다 —
+    요일별로 고르게 뽑힌다. b0 에 넉넉히, 나머지 구간에 각 NEWS_LIMIT//7 건을
+    두면 라운드로빈(구간당 1건씩 순회)이 딱 그 라운드 수 만에 NEWS_LIMIT 에 닿는다.
+    구간끼리 시간이 겹치지 않으므로 최종 반환은 b0→b1→…→b6 순서가 된다.
+
+    구간 수를 상수에서 읽는다 — 창 길이를 바꿀 때 이 테스트가 같이 따라가야 한다.
     """
-    share = collect_daily.NEWS_LIMIT // collect_daily.NEWS_BUCKETS
-    b0 = [
+    buckets = collect_daily.NEWS_BUCKETS
+    share = collect_daily.NEWS_LIMIT // buckets
+    bucket_hours = collect_daily.NEWS_WINDOW_HOURS / buckets
+
+    # b0 에는 상한만큼 넉넉히, 나머지 구간에는 각자 share 만큼만 둔다.
+    rows = [
         make_news(
             source_ref=f"b0-{i}", crawled_at=(NOW - datetime.timedelta(minutes=i + 1)).isoformat()
         )
         for i in range(collect_daily.NEWS_LIMIT)
     ]
-    bucket_hours = collect_daily.NEWS_WINDOW_HOURS / collect_daily.NEWS_BUCKETS
-    b1_base = NOW - datetime.timedelta(hours=bucket_hours * 1.5)
-    b1 = [
-        make_news(
-            source_ref=f"b1-{i}", crawled_at=(b1_base - datetime.timedelta(minutes=i)).isoformat()
-        )
-        for i in range(share)
-    ]
-    b2_base = NOW - datetime.timedelta(hours=bucket_hours * 2.5)
-    b2 = [
-        make_news(
-            source_ref=f"b2-{i}", crawled_at=(b2_base - datetime.timedelta(minutes=i)).isoformat()
-        )
-        for i in range(share)
-    ]
-    b3_base = NOW - datetime.timedelta(hours=bucket_hours * 3.5)
-    b3 = [
-        make_news(
-            source_ref=f"b3-{i}", crawled_at=(b3_base - datetime.timedelta(minutes=i)).isoformat()
-        )
-        for i in range(share)
-    ]
+    for b in range(1, buckets):
+        base = NOW - datetime.timedelta(hours=bucket_hours * (b + 0.5))
+        rows += [
+            make_news(
+                source_ref=f"b{b}-{i}",
+                crawled_at=(base - datetime.timedelta(minutes=i)).isoformat(),
+            )
+            for i in range(share)
+        ]
 
-    result = collect_daily.filter_news(b0 + b1 + b2 + b3, NOW)
+    result = collect_daily.filter_news(rows, NOW)
+    got = [n["source_ref"] for n in result]
 
-    expected = (
-        [f"b0-{i}" for i in range(share)]
-        + [f"b1-{i}" for i in range(share)]
-        + [f"b2-{i}" for i in range(share)]
-        + [f"b3-{i}" for i in range(share)]
-    )
-    assert [n["source_ref"] for n in result] == expected
+    # 구간마다 share 만큼씩 가져간다. NEWS_LIMIT 이 구간 수로 나누어떨어지지
+    # 않으면(100 / 7 = 14 … 2) 남는 자리는 후보가 남아 있는 구간이 채운다 —
+    # 이 표본에서는 b0 만 여유가 있으므로 b0 몫이 그만큼 늘어난다.
+    leftover = collect_daily.NEWS_LIMIT - share * buckets
+    counts = {b: sum(1 for r in got if r.startswith(f"b{b}-")) for b in range(buckets)}
+    assert counts[0] == share + leftover
+    assert all(counts[b] == share for b in range(1, buckets))
+    assert len(got) == collect_daily.NEWS_LIMIT
+    # 구간끼리 시간이 겹치지 않으므로 b0 → b1 → … 순서로 이어붙은 모양이 된다.
+    assert got == sorted(got, key=lambda r: (int(r.split("-")[0][1:]), int(r.split("-")[1])))
 
 
 def test_filter_news_fills_the_limit_from_remaining_buckets_when_others_are_empty() -> None:
@@ -859,9 +854,9 @@ def test_trending_pool_news_has_no_cap() -> None:
     assert len(collect_daily.trending_pool_news(items, NOW)) == 120
 
 
-def test_trending_pool_news_still_bounded_to_24h() -> None:
+def test_trending_pool_news_is_bounded_to_the_weekly_window() -> None:
     items = [
-        make_news(crawled_at="2026-07-29T00:00:00+00:00"),
+        make_news(crawled_at="2026-07-20T00:00:00+00:00"),  # 창(7일) 밖
         make_news(crawled_at="2026-07-31T01:00:00+00:00"),
     ]
 
@@ -878,18 +873,18 @@ def test_trending_pool_videos_does_not_require_a_summary() -> None:
 
 
 def test_trending_pool_videos_excludes_other_topics() -> None:
-    items = [make_video(id="ai"), make_video(id="btc", topic="비트코인")]
+    items = [make_video(id="quantum"), make_video(id="btc", topic="비트코인")]
 
     result = collect_daily.trending_pool_videos(items, NOW)
 
-    assert [v["id"] for v in result] == ["ai"]
+    assert [v["id"] for v in result] == ["quantum"]
 
 
-def test_trending_pool_videos_uses_a_24h_window_not_the_card_48h() -> None:
-    """카드가 48h를 보는 건 요약 지연을 흡수하려는 것이지 신선도 기준이 아니다."""
+def test_trending_pool_videos_uses_the_same_weekly_window_as_the_cards() -> None:
+    """주간 발행이라 집계도 "이번 주 무슨 일이 있었나"를 묻는다 — 카드와 같은 7일이다."""
     items = [
         make_video(id="fresh", published_at="2026-07-31T01:00:00+00:00"),
-        make_video(id="stale", published_at="2026-07-30T01:00:00+00:00"),
+        make_video(id="stale", published_at="2026-07-20T01:00:00+00:00"),  # 창 밖
     ]
 
     result = collect_daily.trending_pool_videos(items, NOW)
@@ -910,13 +905,13 @@ def test_filter_videos_requires_ai_topic_and_summary() -> None:
 
 
 def test_filter_videos_excludes_published_before_window() -> None:
-    items = [make_video(published_at="2026-07-28T02:00:00+00:00")]  # NOW-71h
+    items = [make_video(published_at="2026-07-20T02:00:00+00:00")]  # NOW-11일
 
     assert collect_daily.filter_videos(items, NOW) == []
 
 
-def test_filter_videos_keeps_video_published_within_48h() -> None:
-    items = [make_video(id="late-summary", published_at="2026-07-29T12:00:00+00:00")]  # NOW-39h
+def test_filter_videos_keeps_video_published_within_the_weekly_window() -> None:
+    items = [make_video(id="late-summary", published_at="2026-07-26T12:00:00+00:00")]  # NOW-4.6일
 
     assert [v["id"] for v in collect_daily.filter_videos(items, NOW)] == ["late-summary"]
 
