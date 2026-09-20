@@ -1,8 +1,10 @@
+import { API_BASE } from './apiBase';
+
 /** 카드 이미지의 실제 src를 고른다.
  *
  *  발행분은 뉴스사 CDN의 절대 URL을 담고 있는데(CONTENT_CONTRACT.md 4장), 원본은
  *  실측 평균 380KB다. 카드의 이미지 영역은 뷰포트 폭 그대로라 모바일에서 400px가
- *  채 안 되므로 백엔드 프록시(/api/img)로 줄여 받는다. 로컬 시드 fixture가 쓰는
+ *  채 안 되므로 백엔드 프록시(API_BASE + /img)로 줄여 받는다. 로컬 시드 fixture가 쓰는
  *  stem('fed-macro')은 번들 asset이라 그대로 쓴다.
  */
 
@@ -31,6 +33,6 @@ export function cardImageSrc(
   bundled: Record<string, string>,
 ): string | undefined {
   if (!image) return undefined;
-  if (isRemoteImage(image)) return `/api/img/${date}/${num}?w=${preferredImageWidth()}`;
+  if (isRemoteImage(image)) return `${API_BASE}/img/${date}/${num}?w=${preferredImageWidth()}`;
   return bundled[image];
 }

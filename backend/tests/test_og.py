@@ -105,10 +105,10 @@ def test_og_html_contains_meta_tags(client) -> None:
     # 앞부분은 레퍼런스 페이로드의 meta.title(비트코인 카드뉴스 시절 표본이라
     # CLAUDE.md 가 그대로 두기로 한 파일이다), 뒤에 붙는 브랜드는 이 서비스 것이다.
     assert 'property="og:title" content="비트코인 하이라이트' in body
-    assert '데일리 AI" />' in body
+    assert '데일리 퀀텀" />' in body
     assert 'property="og:description"' in body
-    assert 'property="og:image" content="http://testserver/api/og/2026-07-30/image.jpg"' in body
-    assert 'property="og:url" content="http://testserver/ai/d/2026-07-30"' in body
+    assert 'property="og:image" content="http://testserver/quantum/api/og/2026-07-30/image.jpg"' in body
+    assert 'property="og:url" content="http://testserver/quantum/d/2026-07-30"' in body
 
 
 def test_og_html_missing_date_returns_404(client) -> None:
@@ -126,7 +126,7 @@ def test_og_html_latest_picks_max_date(client) -> None:
     response = client.get("/api/og/latest")
 
     assert response.status_code == 200
-    assert 'property="og:url" content="http://testserver/ai/d/2026-08-01"' in response.text
+    assert 'property="og:url" content="http://testserver/quantum/d/2026-08-01"' in response.text
 
 
 def test_og_html_latest_returns_404_when_empty(client) -> None:
@@ -164,7 +164,7 @@ def test_card_og_uses_that_cards_title_and_image(client) -> None:
 
     assert payload["cards"][2]["title"] in body
     assert f"/api/og/{CARD_DATE}/3/image.jpg" in body
-    assert f'og:url" content="http://testserver/ai/d/{CARD_DATE}/3"' in body
+    assert f'og:url" content="http://testserver/quantum/d/{CARD_DATE}/3"' in body
 
 
 def test_card_og_differs_between_cards(client) -> None:
@@ -184,7 +184,7 @@ def test_edition_og_is_unchanged_without_card_index(client) -> None:
 
     assert payload["meta"]["title"] in body
     assert f"/api/og/{CARD_DATE}/image.jpg" in body
-    assert f'og:url" content="http://testserver/ai/d/{CARD_DATE}"' in body
+    assert f'og:url" content="http://testserver/quantum/d/{CARD_DATE}"' in body
 
 
 def test_card_og_falls_back_to_edition_when_index_is_out_of_range(client) -> None:

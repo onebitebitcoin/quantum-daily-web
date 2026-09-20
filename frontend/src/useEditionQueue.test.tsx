@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MAX_FEED_EDITIONS, useEditionQueue } from './useEditionQueue';
+import { API_BASE } from './apiBase';
 
 const DATES = ['2026-07-28', '2026-07-29', '2026-07-30', '2026-07-31'];
 
@@ -13,7 +14,7 @@ function stubApi(options: { failDates?: string[]; listFails?: boolean } = {}) {
   const calls: string[] = [];
   const fetchMock = vi.fn((path: string) => {
     calls.push(path);
-    if (path === '/api/editions') {
+    if (path === `${API_BASE}/editions`) {
       if (options.listFails) return Promise.reject(new TypeError('network down'));
       return Promise.resolve({
         ok: true,
@@ -21,7 +22,7 @@ function stubApi(options: { failDates?: string[]; listFails?: boolean } = {}) {
         json: () => Promise.resolve(DATES.map((d) => ({ date: d, slug: d, title: d }))),
       } as Response);
     }
-    const date = path.replace('/api/editions/', '');
+    const date = path.replace(`${API_BASE}/editions/`, '');
     if (options.failDates?.includes(date)) {
       return Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) } as Response);
     }
@@ -95,19 +96,19 @@ describe('useEditionQueue', () => {
 
     await waitFor(() => expect(dates()).toBe('2026-07-31'));
 
-    await waitFor(() => expect(calls).toContain('/api/editions/2026-07-30'));
+    await waitFor(() => expect(calls).toContain(`${API_BASE}/editions/2026-07-30`));
     expect(dates()).toBe('2026-07-31');
   });
 
   it('serves an appended date from the prefetch cache instead of refetching', async () => {
     const calls = stubApi();
     render(<Harness startDate="2026-07-31" />);
-    await waitFor(() => expect(calls).toContain('/api/editions/2026-07-30'));
+    await waitFor(() => expect(calls).toContain(`${API_BASE}/editions/2026-07-30`));
 
     await act(async () => loadMore());
     await waitFor(() => expect(dates()).toBe('2026-07-31,2026-07-30'));
 
-    expect(calls.filter((c) => c === '/api/editions/2026-07-30')).toHaveLength(1);
+    expect(calls.filter((c) => c === `${API_BASE}/editions/2026-07-30`)).toHaveLength(1);
   });
 
   it('isolates a failed edition instead of killing the feed', async () => {

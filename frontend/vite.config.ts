@@ -3,8 +3,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  // /ai 경로 밑에서 서빙한다 — 앞으로 이 도메인 루트에 다른 시리즈가 올라올 수 있어서
-  // 이 카드뉴스는 서브패스로 물러난다.
+  // /quantum 경로 밑에서 서빙한다. 같은 도메인의 /ai 는 ai-daily-web 것이고
+  // 루트의 /api 도 그쪽이 쓰므로, 이쪽은 API 까지 서브패스 밑으로 물러난다
+  // (frontend/src/apiBase.ts 와 짝).
   base: '/quantum/',
   plugins: [react()],
   server: {
@@ -19,9 +20,15 @@ export default defineConfig({
     // vite 6은 Host 헤더가 IP나 localhost가 아니면 막는다. 테일스케일 MagicDNS
     // 이름으로 붙으려면 여기 적혀 있어야 한다(IP로만 붙을 거면 없어도 된다).
     allowedHosts: ['nsw.golden-ghost.ts.net'],
-    // 백엔드도 btc-daily-web(8002)과 겹치지 않게 8003이다. 여기가 8002면
-    // 개발 서버가 조용히 비트코인 에디션을 읽는다.
-    proxy: { '/api': 'http://localhost:8004' },
+    // API 는 `/quantum/api` 로 받아 접두사를 떼고 백엔드에 넘긴다 — 프로덕션의
+    // 컨테이너 nginx 와 같은 모양이라야 개발에서만 되는 일이 안 생긴다.
+    // 포트 8004 는 btc-daily-web(8002)·ai-daily-web(8003)과 겹치지 않게 고른 값이다.
+    proxy: {
+      '/quantum/api': {
+        target: 'http://localhost:8004',
+        rewrite: (path) => path.replace(/^\/quantum/, ''),
+      },
+    },
   },
   test: {
     environment: 'jsdom',

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cardImageSrc, isRemoteImage, preferredImageWidth } from './imageUrl';
+import { API_BASE } from './apiBase';
 
 const bundled = { 'fed-macro': '/assets/fed-macro-abc123.jpg' };
 
@@ -39,14 +40,14 @@ describe('cardImageSrc', () => {
   it('routes remote CDN images through the resizing proxy', () => {
     const src = cardImageSrc('2026-08-04', 3, 'https://cdn.example/huge.jpg', bundled);
 
-    expect(src).toBe('/api/img/2026-08-04/3?w=800');
+    expect(src).toBe(`${API_BASE}/img/2026-08-04/3?w=800`);
   });
 
   it('asks the proxy for a narrower image under Save-Data', () => {
     stubSaveData(true);
 
     expect(cardImageSrc('2026-08-04', 3, 'https://cdn.example/huge.jpg', bundled)).toBe(
-      '/api/img/2026-08-04/3?w=480',
+      `${API_BASE}/img/2026-08-04/3?w=480`,
     );
   });
 

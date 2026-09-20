@@ -20,7 +20,7 @@ DESCRIPTION_MAX_LEN = 160
 def pick_card(content: dict[str, Any], card_index: int | None) -> dict[str, Any] | None:
     """슬라이드 위치로 카드를 고른다. 없거나 범위를 벗어나면 None.
 
-    `card_index` 는 `/ai/d/:date/:index` 의 index, 곧 **에디션 안의 슬라이드 위치**다
+    `card_index` 는 `/quantum/d/:date/:index` 의 index, 곧 **에디션 안의 슬라이드 위치**다
     (0 = 표지, 1 = 첫 뉴스 카드). 카드 자체의 번호인 `card["num"]` 과는 다른
     개념이라 `cards[card_index - 1]` 로 찾는다.
 
@@ -108,6 +108,12 @@ def build_og_description(
     return text[:max_len].rstrip() + "…"
 
 
+# 이 카드뉴스가 서빙되는 서브패스. frontend/vite.config.ts 의 `base`,
+# frontend/src/apiBase.ts 의 `API_BASE`, frontend/nginx.conf 의 location 들과
+# 같은 값이어야 한다 — 한 곳만 바꾸면 미리보기 링크가 404 로 간다.
+SUBPATH = "/quantum"
+
+
 def _request_origin(request: Request) -> str:
     scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
     host = request.headers.get("host", request.url.netloc)
@@ -126,15 +132,20 @@ def render_og_html(
     card = pick_card(content, card_index)
     headline = card["title"] if card is not None else content["meta"]["title"]
 
-    title = html.escape(f"{headline} · 데일리 AI")
+    title = html.escape(f"{headline} · 데일리 퀀텀")
     description = html.escape(build_og_description(content, card_index=card_index))
+    # 이 도메인은 시리즈가 둘이라 API 가 `/quantum/api` 로 물러나 있다
+    # (frontend/src/apiBase.ts 와 짝). 미리보기 봇이 여는 절대 URL 이므로
+    # 접두사가 빠지면 ai-daily-web 의 API 로 가서 엉뚱한 그림을 받는다.
     image_path = (
-        f"/api/og/{date_iso}/image.jpg"
+        f"{SUBPATH}/api/og/{date_iso}/image.jpg"
         if card is None
-        else f"/api/og/{date_iso}/{card_index}/image.jpg"
+        else f"{SUBPATH}/api/og/{date_iso}/{card_index}/image.jpg"
     )
     image_url = html.escape(f"{origin}{image_path}")
-    page_path = f"/ai/d/{date_iso}" if card is None else f"/ai/d/{date_iso}/{card_index}"
+    page_path = (
+        f"{SUBPATH}/d/{date_iso}" if card is None else f"{SUBPATH}/d/{date_iso}/{card_index}"
+    )
     page_url = html.escape(f"{origin}{page_path}")
 
     return f"""<!doctype html>

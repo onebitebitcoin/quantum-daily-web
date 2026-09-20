@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import EditionPage, { LatestFeed } from './EditionPage';
 import fixture from './fixtures/content.json';
 import type { EditionContent } from './content';
+import { API_BASE } from './apiBase';
 
 const content = fixture as EditionContent;
 
@@ -35,7 +36,7 @@ describe('EditionPage', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
-        url === '/api/editions' ? Promise.resolve(mockResponse([])) : editionResponse,
+        url === `${API_BASE}/editions` ? Promise.resolve(mockResponse([])) : editionResponse,
       ),
     );
 
@@ -52,7 +53,7 @@ describe('EditionPage', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
-        Promise.resolve(url === '/api/editions' ? mockResponse([]) : mockResponse(null, 404)),
+        Promise.resolve(url === `${API_BASE}/editions` ? mockResponse([]) : mockResponse(null, 404)),
       ),
     );
 
@@ -73,7 +74,7 @@ describe('EditionPage', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
-        Promise.resolve(url === '/api/editions' ? mockResponse([]) : mockResponse(content)),
+        Promise.resolve(url === `${API_BASE}/editions` ? mockResponse([]) : mockResponse(content)),
       ),
     );
 
@@ -113,7 +114,7 @@ describe('LatestFeed', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
-        Promise.resolve(url === '/api/editions' ? mockResponse(list) : mockResponse(content)),
+        Promise.resolve(url === `${API_BASE}/editions` ? mockResponse(list) : mockResponse(content)),
       ),
     );
 
@@ -130,7 +131,7 @@ describe('LatestFeed', () => {
       vi.fn((url: string) => {
         calls.push(url);
         return Promise.resolve(
-          url === '/api/editions'
+          url === `${API_BASE}/editions`
             ? mockResponse([{ date: content.meta.date, slug: 'b', title: 'b' }])
             : mockResponse(content),
         );
@@ -140,7 +141,7 @@ describe('LatestFeed', () => {
     renderLatestFeed();
 
     await screen.findByText(content.cover.eyebrow);
-    expect(calls).not.toContain('/api/editions/latest');
+    expect(calls).not.toContain(`${API_BASE}/editions/latest`);
   });
 
   it('surfaces a network failure instead of hanging on the loading state', async () => {

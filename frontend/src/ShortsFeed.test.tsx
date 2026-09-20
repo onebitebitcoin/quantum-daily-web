@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ShortsFeed } from './ShortsFeed';
 import fixture from './fixtures/content.json';
 import type { EditionContent, Trending } from './content';
+import { API_BASE } from './apiBase';
 
 const base = fixture as EditionContent;
 const DATES = ['2026-07-28', '2026-07-29', '2026-07-30'];
@@ -51,14 +52,14 @@ function stubApi() {
   vi.stubGlobal(
     'fetch',
     vi.fn((path: string) => {
-      if (path === '/api/editions') {
+      if (path === `${API_BASE}/editions`) {
         return Promise.resolve({
           ok: true,
           status: 200,
           json: () => Promise.resolve(DATES.map((d) => ({ date: d, slug: d, title: d }))),
         } as Response);
       }
-      const date = path.replace('/api/editions/', '');
+      const date = path.replace(`${API_BASE}/editions/`, '');
       return Promise.resolve({
         ok: true,
         status: 200,
@@ -93,14 +94,14 @@ function stubApiWithTrending() {
   vi.stubGlobal(
     'fetch',
     vi.fn((path: string) => {
-      if (path === '/api/editions') {
+      if (path === `${API_BASE}/editions`) {
         return Promise.resolve({
           ok: true,
           status: 200,
           json: () => Promise.resolve(DATES.map((d) => ({ date: d, slug: d, title: d }))),
         } as Response);
       }
-      const date = path.replace('/api/editions/', '');
+      const date = path.replace(`${API_BASE}/editions/`, '');
       return Promise.resolve({
         ok: true,
         status: 200,

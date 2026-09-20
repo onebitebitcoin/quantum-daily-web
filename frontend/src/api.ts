@@ -1,3 +1,4 @@
+import { API_BASE } from './apiBase';
 import type { EditionContent } from './content';
 
 export interface EditionSummary {
@@ -21,11 +22,11 @@ async function request<T>(path: string, method = 'GET'): Promise<T> {
 }
 
 export function fetchEditions(): Promise<EditionSummary[]> {
-  return request('/api/editions');
+  return request(`${API_BASE}/editions`);
 }
 
 export function fetchEdition(date: string): Promise<EditionContent> {
-  return request(`/api/editions/${date}`);
+  return request(`${API_BASE}/editions/${date}`);
 }
 
 /** 카드 번호(`card.num`)를 키로 한 좋아요 수. 아무도 안 누른 카드는 키가 없다. */
@@ -37,15 +38,15 @@ export interface CardLikeResult {
 }
 
 export function fetchLikes(date: string): Promise<CardLikeCounts> {
-  return request(`/api/editions/${date}/likes`);
+  return request(`${API_BASE}/editions/${date}/likes`);
 }
 
 export function likeCard(date: string, num: number): Promise<CardLikeResult> {
-  return request(`/api/editions/${date}/cards/${num}/like`, 'POST');
+  return request(`${API_BASE}/editions/${date}/cards/${num}/like`, 'POST');
 }
 
 export function unlikeCard(date: string, num: number): Promise<CardLikeResult> {
-  return request(`/api/editions/${date}/cards/${num}/like`, 'DELETE');
+  return request(`${API_BASE}/editions/${date}/cards/${num}/like`, 'DELETE');
 }
 
 export function errorMessage(err: unknown): string {
