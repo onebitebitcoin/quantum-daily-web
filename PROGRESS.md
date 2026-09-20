@@ -12,10 +12,12 @@ quantum-daily-web → quantum-weekly-web 전면 개명.
 
 - [x] Phase 3: GitHub 저장소 rename + 로컬 remote 갱신 + ai-daily-web 쪽 주석 정정
 
-## 현재 진행 중
-- [ ] Phase 4: 서버 디렉토리·러너 rename (사람이 SSH 로) ← 계획서 Phase 4 런북 참고
-  - CI 의 deploy 잡이 지금 큐에서 러너를 기다리는 중이다(run 35536627535).
-    새 라벨 quantum-weekly-web 에 매칭되는 러너가 서버에 없어서다.
+- [x] Phase 4: 서버 디렉토리·러너 rename (사람이 SSH 로 완료 — 러너 measly-quantum-weekly
+  online, deploy 잡 success, 2026-09-20 발행분 데이터 보존 확인)
 
-## 남은 Phase
-- [ ] Phase 5: 마무리 확인 및 PROGRESS.md 정리
+## 현재 진행 중
+- [ ] Phase 5: 마무리 확인
+  - [x] og:site_name 하드코딩("데일리 AI") 발견·수정 — Phase 5 검증 중 실측으로 발견,
+    BRAND 상수로 통합, 회귀 테스트 추가 (d1d55a7, 배포 확인 중)
+  - [ ] 최종 프로덕션 확인 (화면 제목·site_name·카드 이미지 10장)
+  - [ ] PROGRESS.md 삭제 + 최종 커밋
