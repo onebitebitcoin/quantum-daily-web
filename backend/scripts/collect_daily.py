@@ -5,7 +5,8 @@ require judgement (meta/theme/brand/cover/closing) and dumps ranked candidates
 for a human (or a Claude Code session) to pick 10 cards from.
 
 btc-daily-web 의 같은 파일에서 갈라져 나왔다. 필터·버킷·트렌딩 점수 공식은 그대로고
-도메인 용어집 세 벌(AI_TERMS / CRYPTO_TERMS / INDUSTRY_TERMS)과 영상 topic 만 다르다.
+도메인 용어집 세 벌(QUANTUM_TERMS / EXCLUDE_TERMS / PHYSICS_TERMS)과 영상 topic,
+수집 창(주간 168h)이 다르다.
 AI 쪽에만 있는 로직은 매체 간 사건 클러스터링(cluster_events)이다 — 2026-08-26
 드라이런에서 오픈AI 할라페뇨 칩 한 건이 후보 100칸 중 8칸을 먹었다.
 
@@ -55,7 +56,7 @@ DEFAULT_NEWS_URL = "http://localhost:8000/api/news?asset=ai&limit=500"
 DEFAULT_TRENDING_NEWS_URL = "http://localhost:8000/api/news?asset=ai&limit=500"
 # 산업 보강 풀. my-news 의 asset=ai 는 반도체·전력 기사를 상당수 놓친다 — 디일렉·
 # 올포칩·에너지경제처럼 "AI" 를 제목에 안 쓰고 HBM·파운드리·전력망만 말하는 매체가
-# 그렇다. 그래서 asset 필터 없이 한 번 더 받되 **industry 등급만** 취한다.
+# 그렇다. 그래서 asset 필터 없이 한 번 더 받되 **physics 등급만** 취한다.
 # btc 등급 대신 ai 등급을 버리는 것도 같은 이유다: 비트코인 기사가 대부분인 이
 # 피드에서 ai 등급까지 주우면 코인 시황이 후보 상단으로 샌다.
 DEFAULT_BROAD_NEWS_URL = "http://localhost:8000/api/news?limit=500"
@@ -80,179 +81,65 @@ NEWS_BUCKETS = 4  # 창을 4등분해 시간대별로 고르게 뽑는다
 # 산업 등급에 떼어두는 자리. 등급 순서대로만 채우면 ai 가 NEWS_LIMIT 을 그대로 다
 # 먹어(2026-08-26 드라이런: 36h ai 등급 251건) 산업이 한 건도 못 올라온다 — 카드가
 # 반도체·전력 각도를 쓸 수 있으려면 후보에 보이기부터 해야 한다.
-INDUSTRY_RESERVE = 12
+PHYSICS_RESERVE = 12
 
 # 후보의 AI 관련도 등급. 앞에 올수록 먼저 후보 자리를 가져간다.
 # 카드는 AI 온리가 1순위이고, 물량이 모자라면 크립토·일반 테크 소재 대신
 # 산업(반도체·전력·데이터센터·CAPEX)으로 채운다.
-RELEVANCE_TIERS = ("ai", "industry", "other")
+RELEVANCE_TIERS = ("quantum", "physics", "other")
 
 # 관련도 판정 키워드. title 은 가중치 3, summary+tags 는 1로 센다(_relevance_score).
 # ASCII 항목은 단어 경계로, 한글 항목은 부분 문자열로 맞춘다.
 #
-# 1순위. 모델·연구소·에이전트처럼 "AI 그 자체"인 소재다.
-AI_TERMS = (
-    "인공지능",
-    "ai",
-    "llm",
-    "생성형",
-    "genai",
-    "오픈ai",
-    "openai",
-    "챗gpt",
-    "chatgpt",
-    "gpt",
-    "앤트로픽",
-    "앤스로픽",
-    "anthropic",
-    "클로드",
-    "claude",
-    "제미나이",
-    "gemini",
-    "딥마인드",
-    "deepmind",
-    "라마",
-    "llama",
-    "미스트랄",
-    "mistral",
-    "딥시크",
-    "deepseek",
-    "퍼플렉시티",
-    "perplexity",
-    "코파일럿",
-    "copilot",
-    "허깅페이스",
-    "hugging face",
-    "에이전트",
-    "agentic",
-    "추론 모델",
-    "파인튜닝",
-    "fine-tuning",
-    "머신러닝",
-    "machine learning",
-    "딥러닝",
-    "deep learning",
-    "파운데이션 모델",
-    "foundation model",
-    "멀티모달",
-    "multimodal",
-    "agi",
-    "초지능",
-    "superintelligence",
-    "정렬",
-    "alignment",
-    "환각",
-    "hallucination",
-    "프롬프트",
-    "prompt",
-    "벡터 db",
-    "rag",
-    "트랜스포머",
-    "transformer",
+# 1순위. 큐비트·양자기업·양자암호처럼 "양자 그 자체"인 소재다.
+QUANTUM_TERMS = (
+    "양자컴퓨터", "양자컴퓨팅", "양자기술", "양자정보", "양자우위",
+    "큐비트", "qubit", "quantum", "qpu",
+    "양자얽힘", "얽힘", "entangle", "중첩", "superposition",
+    "결맞음", "coherence", "결어긋남", "decoherence",
+    "양자오류", "오류정정", "error correction", "error-corrected",
+    "양자내성", "양자암호", "pqc", "post-quantum", "포스트퀀텀",
+    "qkd", "양자키분배", "양자통신", "양자센서", "양자센싱",
+    "양자광학", "양자역학", "양자물리", "양자시뮬레이션",
+    # 기업·기관 고유명사. 다른 뜻으로 읽힐 여지가 없는 것만 골랐다.
+    "아이온큐", "ionq", "퀀티넘", "quantinuum", "디웨이브", "d-wave",
+    "리게티", "rigetti", "파스칼", "pasqal", "quera", "psiquantum",
+    "퀴스킷", "qiskit", "ibm quantum", "google quantum",
+    # 큐비트 구현 방식
+    "초전도큐비트", "중성원자", "neutral atom", "이온트랩", "trapped ion",
+    "위상큐비트", "topological qubit", "마요라나", "majorana",
 )
-# "agent"(영문 단독)와 "토큰"은 넣지 않는다 — 전자는 travel agent·free agent 를,
-# 후자는 코인 기사를 그대로 끌고 온다. 한글 "에이전트"만으로 충분하다.
+# "양자" 단독은 넣지 않는다 — quantization 의 번역어가 '양자화'라 LLM 경량화
+# 기사가 통째로 딸려 온다. 같은 이유로 "입양자"·"부양자" 도 걸린다.
 #
-# 배제 축. btc-daily-web 에서 알트코인이 하던 역할을 여기서는 크립토가 한다 —
-# my-news 의 asset=ai 응답 500건 중 128건이 토큰포스트발이고(2026-08-26 실측)
-# 이 축이 없으면 후보 상단이 코인 시황으로 덮인다. 실제로 넣고 돌린 결과
-# 후보 100건 중 크립토 기사는 0건이었다.
-CRYPTO_TERMS = (
-    "비트코인",
-    "btc",
-    "bitcoin",
-    "이더리움",
-    "ethereum",
-    "eth",
-    "xrp",
-    "리플",
-    "솔라나",
-    "solana",
-    "알트코인",
-    "altcoin",
-    "스테이블코인",
-    "stablecoin",
-    "usdt",
-    "usdc",
-    "테더",
-    "암호화폐",
-    "가상자산",
-    "크립토",
-    "crypto",
-    "밈코인",
-    "memecoin",
-    "nft",
-    "디파이",
-    "defi",
-    "채굴",
-    "mining",
-    "해시레이트",
-    "온체인",
-    "김치 프리미엄",
-    "거래소 상장",
-    # 거래소·크립토 운용사 이름. 2026-08-26 실측에서 "Bitwise turns Coinbase's
-    # tokenized stocks into automated AI portfolios" 한 건이 ai 등급으로 샜다 —
-    # 제목의 AI 점수가 크립토 점수보다 높았기 때문이다. 아래는 다른 뜻으로 읽힐
-    # 여지가 없는 고유명사만 골랐다. "토큰"·"stable" 은 넣지 않는다 — 각각 LLM
-    # 토큰과 Stable Diffusion 을 그대로 끌고 온다.
-    "코인베이스",
-    "coinbase",
-    "bitwise",
-    "바이낸스",
-    "binance",
-    "업비트",
-    "upbit",
-    "kraken",
+# 배제 축. ai-daily-web 에서 크립토가 하던 역할을 여기서는 아래 셋이 한다.
+# 셋 다 2026-09-20 실측으로 후보에 실제로 섞여 들어온 것이다:
+#   - 'Qwen3.8 27B 양자화 벤치마크'  (quantization = LLM 경량화)
+#   - '삼성, 올해 QD TV 생산 80% 줄인다'  (퀀텀닷 = 디스플레이)
+#   - 'K-방산, 자주포 넘어 퀀텀점프'  (퀀텀점프 = 비유)
+# 양자점(quantum dot) 자체는 빼지 않는다 — 양자점 큐비트는 진짜 양자 소재다.
+# 디스플레이 제품명만 골라 막는다.
+EXCLUDE_TERMS = (
+    "양자화", "quantization", "quantized",
+    "퀀텀점프", "퀀텀 점프", "quantum leap",
+    "qd tv", "qd-oled", "qled", "퀀텀닷 tv", "퀀텀닷 티비",
+    "입양자", "부양자", "수양자",
 )
-# 2순위. 반도체·전력·자본지출 — AI 를 굴리는 데 드는 물리적 비용 쪽이다.
-# **넓은 단어를 넣지 않는 게 이 튜플의 규칙이다.** 2026-08-26 드라이런에서
-# 관세·규제·IPO·펀딩·밸류에이션을 넣었더니 2순위 12칸 중 9칸이 증시 시황
-# (변동성지수·코스피 급등락·롱 포지션 쏠림)으로 찼고, 미국 정치자금 기사까지
-# 밀려 올라왔다. 그래서 하드웨어·전력·설비로 좁힌다.
-INDUSTRY_TERMS = (
-    "엔비디아",
-    "nvidia",
-    "gpu",
-    "tpu",
-    "npu",
-    "asic",
-    "반도체",
-    "hbm",
-    "tsmc",
-    "sk하이닉스",
-    "마이크론",
-    "micron",
-    "파운드리",
-    "foundry",
-    "웨이퍼",
-    "d램",
-    "dram",
-    "낸드",
-    "nand",
-    "브로드컴",
-    "broadcom",
-    "데이터센터",
-    "data center",
-    "datacenter",
-    "하이퍼스케일러",
-    "hyperscaler",
-    "전력망",
-    "전력 수요",
-    "전력 확보",
-    "기가와트",
-    "gigawatt",
-    "원전",
-    "smr",
-    "액침냉각",
-    "capex",
-    "자본지출",
-    "설비투자",
-    "수출 통제",
-    "export control",
-    "eu ai act",
-    "ai 기본법",
-    "ai 규제",
+# 2순위. 초전도·극저온·포토닉스처럼 양자를 굴리는 물리·산업 기반 쪽이다.
+# **넓은 단어를 넣지 않는 게 이 튜플의 규칙이다.** ai-daily-web 이 관세·IPO·
+# 밸류에이션을 넣었다가 2순위가 증시 시황으로 찼던 전례를 그대로 따른다.
+PHYSICS_TERMS = (
+    "초전도", "superconduct", "극저온", "cryogenic", "희석냉동",
+    "dilution refrigerator", "밀리켈빈", "millikelvin",
+    "포토닉스", "photonic", "광자", "photon", "레이저", "laser",
+    "스핀트로닉스", "spintronic", "응집물질", "condensed matter",
+    "원자시계", "atomic clock", "냉각원자", "cold atom", "보스-아인슈타인",
+    "중성미자", "neutrino", "입자가속기", "accelerator", "cern", "lhc",
+    "반도체", "semiconductor", "파운드리", "foundry", "웨이퍼",
+    "표준연", "kriss", "국가 양자", "national quantum", "chips act",
 )
+
+
 # 매체 간 사건 클러스터링. 2026-08-26 드라이런에서 오픈AI 할라페뇨 칩 발표 한 건이
 # 후보 100칸 중 8칸을 먹었다 — my-news 의 `is_duplicate` 는 매체 **내부** 중복만
 # 잡고 매체 간 중복은 그대로 통과시킨다. btc-daily-web 은 매체가 11곳이라 없어도
@@ -701,23 +588,24 @@ def _relevance_score(news: dict[str, Any], terms: tuple[str, ...]) -> int:
 
 
 def classify_relevance(news: dict[str, Any]) -> str:
-    """기사를 RELEVANCE_TIERS 중 하나로 분류한다 — "ai" / "industry" / "other".
+    """기사를 RELEVANCE_TIERS 중 하나로 분류한다 — "quantum" / "physics" / "other".
 
-    AI 점수가 크립토 점수 이상이면 ai, 아니면 산업 점수가 크립토 이상일 때
-    industry, 나머지는 other. 동점을 ai·industry 쪽에 주는 건 의도한 것이다 —
+    양자 점수가 배제 점수 이상이면 quantum, 아니면 물리 점수가 배제 이상일 때
+    physics, 나머지는 other. 동점을 quantum·physics 쪽에 주는 건 의도한 것이다 —
     이 등급은 후보를 자르는 게이트가 아니라 **후보 자리를 누가 먼저 가져가느냐**를
     정하는 우선순위라서, 카드 10장을 고르는 사람이 한 번 더 거른다.
 
-    2026-08-26 드라이런 285건 실측: ai 251 / industry 23 / other 11. other 가 4%
-    밖에 안 되는 건 asset=ai 피드가 이미 한 번 걸러져 들어오기 때문이다 — 이쪽
-    파이프라인에서 후보 품질을 실제로 좌우하는 건 등급이 아니라 cluster_events 다.
+    양자 코퍼스는 asset=quantum 피드가 이미 한 번 걸러져 들어오므로 other 가
+    거의 없다. 이 파이프라인에서 후보 품질을 실제로 좌우하는 건 등급이 아니라
+    배제 축(EXCLUDE_TERMS)이다 — 양자화·퀀텀닷 TV·퀀텀점프가 제목 점수만 보면
+    양자 기사처럼 보이기 때문이다.
     """
-    ai = _relevance_score(news, AI_TERMS)
-    crypto = _relevance_score(news, CRYPTO_TERMS)
-    if ai and ai >= crypto:
-        return "ai"
-    if _relevance_score(news, INDUSTRY_TERMS) >= max(crypto, 1):
-        return "industry"
+    quantum = _relevance_score(news, QUANTUM_TERMS)
+    excluded = _relevance_score(news, EXCLUDE_TERMS)
+    if quantum and quantum >= excluded:
+        return "quantum"
+    if _relevance_score(news, PHYSICS_TERMS) >= max(excluded, 1):
+        return "physics"
     return "other"
 
 
@@ -893,12 +781,12 @@ def _round_robin_by_bucket(
     return picked
 
 
-def industry_topups(
+def physics_topups(
     items: list[dict[str, Any]],
     now: datetime.datetime,
     exclude_urls: Collection[str] = (),
 ) -> list[dict[str, Any]]:
-    """asset 필터 없는 피드에서 **industry 등급만** 골라낸다 — 산업 보강 풀.
+    """asset 필터 없는 피드에서 **physics 등급만** 골라낸다 — 물리 보강 풀.
 
     ai 등급은 일부러 버린다. 이 피드는 비트코인·일반 뉴스가 대부분이라 그대로
     받으면 후보 상단이 코인 시황으로 오염된다. AI 기사는 my-news 가 이미
@@ -917,7 +805,7 @@ def industry_topups(
         crawled = news.get("crawled_at")
         if not crawled or _parse_dt(crawled) < cutoff:
             continue
-        if classify_relevance(news) != "industry":
+        if classify_relevance(news) != "physics":
             continue
         seen.add(url)
         picked.append(news)
@@ -937,10 +825,10 @@ def filter_news(
     두 축이 겹쳐 있다.
 
     **관련도(바깥 축).** RELEVANCE_TIERS 순서대로 ai 를 먼저 채우고, 남으면
-    industry, 그래도 남으면 other 로 채운다. 카드가 AI 온리를 1순위로 두고
+    physics, 그래도 남으면 other 로 채운다. 카드가 양자 온리를 1순위로 두고
     물량이 모자랄 때 크립토 대신 산업(반도체·전력)을 쓰기 때문이다. 다만 ai 만으로
-    상한이 차버리면 산업이 후보에 아예 안 보이므로, industry 후보가 있는 만큼
-    INDUSTRY_RESERVE 자리까지는 ai 몫에서 떼어 남겨둔다.
+    상한이 차버리면 물리가 후보에 아예 안 보이므로, physics 후보가 있는 만큼
+    PHYSICS_RESERVE 자리까지는 quantum 몫에서 떼어 남겨둔다.
 
     **시간대(안쪽 축).** 각 등급 안에서는 창을 NEWS_BUCKETS 개 구간으로 나눠
     구간별 라운드로빈으로 뽑는다. 크론이 06:00 KST 에 도는 탓에 그 직전 몇 시간
@@ -986,13 +874,13 @@ def filter_news(
     fresh = collapse_events(fresh)
 
     by_tier = {tier: [n for n in fresh if n["relevance"] == tier] for tier in RELEVANCE_TIERS}
-    # btc 가 상한을 다 먹지 않도록, 실제로 있는 만큼만 매크로 자리를 떼어둔다.
-    reserved = min(INDUSTRY_RESERVE, len(by_tier["industry"]))
+    # quantum 이 상한을 다 먹지 않도록, 실제로 있는 만큼만 물리 자리를 떼어둔다.
+    reserved = min(PHYSICS_RESERVE, len(by_tier["physics"]))
 
     picked: list[dict[str, Any]] = []
     for tier in RELEVANCE_TIERS:
         room = NEWS_LIMIT - len(picked)
-        if tier == "ai":
+        if tier == "quantum":
             room -= reserved
         if room <= 0:
             continue
@@ -1454,11 +1342,11 @@ def main(argv: list[str] | None = None, client: httpx.Client | None = None) -> P
         except (httpx.HTTPError, SystemExit) as exc:
             print(f"경고: 산업 보강 피드를 못 읽어 건너뛴다 ({exc!r})", file=sys.stderr)
             broad_raw = []
-        industry_extra = industry_topups(
+        physics_extra = physics_topups(
             broad_raw, window_end_utc, {n.get("url") for n in news_raw if n.get("url")}
         )
         news = filter_news(
-            news_raw + industry_extra,
+            news_raw + physics_extra,
             window_end_utc,
             used_image_hashes,
             lambda url: get_image_hash(client, url, image_hash_cache),
@@ -1492,7 +1380,7 @@ def main(argv: list[str] | None = None, client: httpx.Client | None = None) -> P
     if is_exhausted(quote_pool, used_quote_ids):
         print(
             "경고: 표지 인용구 풀을 한 바퀴 다 돌았다 — 가장 오래전에 쓴 것부터 "
-            f"재사용한다 (풀 {len(quote_pool)}개). ai_quotes.json 을 늘려라.",
+            f"재사용한다 (풀 {len(quote_pool)}개). quantum_quotes.json 을 늘려라.",
             file=sys.stderr,
         )
     quote = pick_quote(quote_pool, used_quote_ids, date)

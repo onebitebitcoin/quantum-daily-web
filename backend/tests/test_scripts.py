@@ -51,13 +51,13 @@ def make_news(**overrides: Any) -> dict[str, Any]:
 # 접어버려 "N건을 채운다" 전제가 깨진다 — 공유 단어를 "briefing" 하나 + 순환하는
 # 용어 하나로 제한해 두 제목 사이 공유 앵커가 EVENT_MIN_ANCHORS(3) 밑에 머물게
 # 한다(용어가 우연히 겹쳐도 앵커 2개뿐이라 안 묶인다).
-_AI_TITLE_TERMS = [
-    "OpenAI", "Anthropic", "Claude", "Gemini", "Llama",
-    "Mistral", "DeepSeek", "Perplexity", "Copilot", "ChatGPT", "GPT",
+_QUANTUM_TITLE_TERMS = [
+    "IonQ", "Quantinuum", "D-Wave", "Rigetti", "Pasqal",
+    "QuEra", "PsiQuantum", "Qiskit", "qubit", "QKD", "PQC",
 ]
-_INDUSTRY_TITLE_TERMS = [
-    "Nvidia", "TSMC", "Micron", "Broadcom", "HBM",
-    "Foundry", "DRAM", "NAND", "Hyperscaler", "CapEx", "Gigawatt",
+_PHYSICS_TITLE_TERMS = [
+    "superconducting", "cryogenic", "photonic", "laser", "neutrino",
+    "CERN", "LHC", "condensed matter", "atomic clock", "cold atom", "semiconductor",
 ]
 
 
@@ -265,11 +265,11 @@ def test_collapse_events_does_not_mutate_the_input_items() -> None:
 def test_filter_news_folds_events_before_counting_the_limit() -> None:
     """상한은 접은 뒤에 센다 — 접기 전에 자르면 상위 칸을 같은 사건이 나눠 먹는다."""
     distinct = [
-        make_news(source_ref=f"ai-{i}", title=rotating_title(_AI_TITLE_TERMS, i))
+        make_news(source_ref=f"quantum-{i}", title=rotating_title(_QUANTUM_TITLE_TERMS, i))
         for i in range(collect_daily.NEWS_LIMIT)
     ]
     same_event = [
-        make_news(source_ref=f"dup-{i}", title=rotating_title(_AI_TITLE_TERMS, 0))
+        make_news(source_ref=f"dup-{i}", title=rotating_title(_QUANTUM_TITLE_TERMS, 0))
         for i in range(4)
     ]
 
@@ -462,10 +462,10 @@ def test_filter_news_caps_at_the_limit() -> None:
 # ---- collect_daily.classify_relevance / 관련도 우선순위 ----
 
 
-def test_classify_relevance_marks_ai_only_articles_as_ai() -> None:
-    news = make_news(title="오픈AI, 새 추론 모델 벨 공개로 벤치마크 경신")
+def test_classify_relevance_marks_quantum_only_articles_as_quantum() -> None:
+    news = make_news(title="아이온큐, 256큐비트 양자컴퓨터 공개")
 
-    assert collect_daily.classify_relevance(news) == "ai"
+    assert collect_daily.classify_relevance(news) == "quantum"
 
 
 def test_classify_relevance_marks_crypto_articles_tagged_ai_as_other() -> None:
@@ -483,10 +483,25 @@ def test_classify_relevance_marks_crypto_articles_tagged_ai_as_other() -> None:
     assert collect_daily.classify_relevance(news) == "other"
 
 
-def test_classify_relevance_marks_industry_articles_as_industry() -> None:
-    news = make_news(title="엔비디아 HBM 공급 부족, 삼성 파운드리 증설 검토")
+def test_classify_relevance_marks_physics_articles_as_physics() -> None:
+    news = make_news(title="초전도 박막의 극저온 특성, 희석냉동기로 측정")
 
-    assert collect_daily.classify_relevance(news) == "industry"
+    assert collect_daily.classify_relevance(news) == "physics"
+
+
+def test_classify_relevance_rejects_quantization_articles() -> None:
+    """'양자화'는 quantization 의 번역어다 — LLM 경량화 기사가 양자 등급으로 새면 안 된다."""
+    news = make_news(title="Qwen3.8 27B 4비트 양자화 벤치마크: 성능 유지")
+
+    assert collect_daily.classify_relevance(news) != "quantum"
+
+
+def test_classify_relevance_rejects_quantum_dot_tv_and_quantum_leap() -> None:
+    """퀀텀닷 TV 는 디스플레이 기사이고 퀀텀점프는 비유다. 둘 다 실제로 후보에 섞여 들어왔다."""
+    assert collect_daily.classify_relevance(
+        make_news(title="삼성, 올해 QD TV 생산 80% 줄인다")) != "quantum"
+    assert collect_daily.classify_relevance(
+        make_news(title="K-방산, 자주포 넘어 퀀텀점프")) != "quantum"
 
 
 def test_classify_relevance_does_not_treat_the_word_token_as_an_ai_signal() -> None:
@@ -509,52 +524,52 @@ def test_classify_relevance_matches_ascii_terms_on_word_boundaries() -> None:
 
 
 def test_filter_news_attaches_relevance_to_every_candidate() -> None:
-    items = [make_news(title="오픈AI 새 추론 모델 공개")]
+    items = [make_news(title="아이온큐, 256큐비트 양자컴퓨터 공개")]
 
     result = collect_daily.filter_news(items, NOW)
 
-    assert result[0]["relevance"] == "ai"
+    assert result[0]["relevance"] == "quantum"
 
 
-def test_filter_news_fills_ai_before_industry_before_other() -> None:
+def test_filter_news_fills_quantum_before_physics_before_other() -> None:
     """등급이 바깥 축이다 — 더 최근이어도 other 는 ai 뒤로 밀린다.
 
     other 를 가장 최근으로 두고 ai 를 가장 오래된 것으로 둔다. 예전처럼 최신순
     단일 정렬이었다면 other 가 맨 앞에 왔을 배치다.
     """
     other = make_news(
-        source_ref="other", title="비트코인 8만달러 회복", crawled_at="2026-07-31T02:55:00+00:00"
+        source_ref="other", title="코스피 사흘째 상승 마감", crawled_at="2026-07-31T02:55:00+00:00"
     )
     industry = make_news(
-        source_ref="industry",
-        title="엔비디아 HBM 공급 부족",
+        source_ref="physics",
+        title="초전도 박막 극저온 특성 측정",
         crawled_at="2026-07-31T02:50:00+00:00",
     )
     ai = make_news(
-        source_ref="ai", title="오픈AI 새 모델 공개", crawled_at="2026-07-31T02:45:00+00:00"
+        source_ref="quantum", title="아이온큐 256큐비트 공개", crawled_at="2026-07-31T02:45:00+00:00"
     )
 
     result = collect_daily.filter_news([other, industry, ai], NOW)
 
-    assert [n["source_ref"] for n in result] == ["ai", "industry", "other"]
+    assert [n["source_ref"] for n in result] == ["quantum", "physics", "other"]
 
 
-def test_filter_news_truncates_lower_tiers_when_ai_fills_the_limit() -> None:
+def test_filter_news_truncates_lower_tiers_when_quantum_fills_the_limit() -> None:
     """ai 만으로 NEWS_LIMIT 이 차면 다른 등급 기사는 후보에 아예 안 들어온다."""
     ai = [
         make_news(
-            source_ref=f"ai-{i}",
-            title=rotating_title(_AI_TITLE_TERMS, i),
+            source_ref=f"quantum-{i}",
+            title=rotating_title(_QUANTUM_TITLE_TERMS, i),
             crawled_at=(NOW - datetime.timedelta(minutes=i + 1)).isoformat(),
         )
         for i in range(collect_daily.NEWS_LIMIT)
     ]
-    other = [make_news(source_ref="other", title="이더리움 스테이킹 물량 증가")]
+    other = [make_news(source_ref="other", title="코스피 사흘째 상승 마감")]
 
     result = collect_daily.filter_news(ai + other, NOW)
 
     assert len(result) == collect_daily.NEWS_LIMIT
-    assert all(n["relevance"] == "ai" for n in result)
+    assert all(n["relevance"] == "quantum" for n in result)
 
 
 def test_filter_news_puts_priority_urls_first_within_a_bucket() -> None:
@@ -617,10 +632,10 @@ def test_trending_article_urls_dedupes_and_stops_at_the_priority_cutoff() -> Non
     ]
 
 
-# ---- collect_daily.industry_topups / 산업 예약 자리 ----
+# ---- collect_daily.physics_topups / 산업 예약 자리 ----
 
 
-def test_industry_topups_keeps_only_industry_tier() -> None:
+def test_physics_topups_keeps_only_industry_tier() -> None:
     """ai 등급은 일부러 버린다 — 이 피드는 asset 필터가 없어 대부분 비트코인·일반 뉴스다."""
     items = [
         make_news(url="i", title="엔비디아 HBM 공급 부족, 삼성 파운드리 증설"),
@@ -628,67 +643,67 @@ def test_industry_topups_keeps_only_industry_tier() -> None:
         make_news(url="a", title="오픈AI 새 모델 공개"),
     ]
 
-    result = collect_daily.industry_topups(items, NOW)
+    result = collect_daily.physics_topups(items, NOW)
 
     assert [n["url"] for n in result] == ["i"]
 
 
-def test_industry_topups_skips_urls_already_in_the_base_feed() -> None:
+def test_physics_topups_skips_urls_already_in_the_base_feed() -> None:
     items = [make_news(url="dup", title="엔비디아 GPU 공급 부족")]
 
-    assert collect_daily.industry_topups(items, NOW, {"dup"}) == []
+    assert collect_daily.physics_topups(items, NOW, {"dup"}) == []
 
 
-def test_industry_topups_respects_the_news_window() -> None:
+def test_physics_topups_respects_the_news_window() -> None:
     stale = NOW - datetime.timedelta(hours=collect_daily.NEWS_WINDOW_HOURS + 1)
     items = [make_news(url="old", title="엔비디아 GPU 공급 부족", crawled_at=stale.isoformat())]
 
-    assert collect_daily.industry_topups(items, NOW) == []
+    assert collect_daily.physics_topups(items, NOW) == []
 
 
-def test_filter_news_reserves_slots_for_industry_when_ai_would_fill_the_limit() -> None:
+def test_filter_news_reserves_slots_for_physics_when_quantum_would_fill_the_limit() -> None:
     """ai 가 상한을 다 먹어도 산업(반도체·전력)이 후보에 보여야 한다."""
     ai = [
         make_news(
-            source_ref=f"ai-{i}",
-            title=rotating_title(_AI_TITLE_TERMS, i),
+            source_ref=f"quantum-{i}",
+            title=rotating_title(_QUANTUM_TITLE_TERMS, i),
             crawled_at=(NOW - datetime.timedelta(minutes=i + 1)).isoformat(),
         )
         for i in range(collect_daily.NEWS_LIMIT + 20)
     ]
     industry = [
         make_news(
-            source_ref=f"industry-{i}",
-            title=rotating_title(_INDUSTRY_TITLE_TERMS, i),
+            source_ref=f"physics-{i}",
+            title=rotating_title(_PHYSICS_TITLE_TERMS, i),
             crawled_at=(NOW - datetime.timedelta(minutes=i + 1)).isoformat(),
         )
-        for i in range(collect_daily.INDUSTRY_RESERVE + 5)
+        for i in range(collect_daily.PHYSICS_RESERVE + 5)
     ]
 
     result = collect_daily.filter_news(ai + industry, NOW)
 
     assert len(result) == collect_daily.NEWS_LIMIT
-    kept = sum(1 for n in result if n["relevance"] == "industry")
-    assert kept == collect_daily.INDUSTRY_RESERVE
+    kept = sum(1 for n in result if n["relevance"] == "physics")
+    assert kept == collect_daily.PHYSICS_RESERVE
 
 
-def test_filter_news_gives_the_reserve_back_when_industry_is_short() -> None:
-    """산업 기사가 예약분보다 적으면 남는 자리는 ai 가 도로 가져간다."""
-    ai = [
+def test_filter_news_gives_the_reserve_back_when_physics_is_short() -> None:
+    """물리 기사가 예약분보다 적으면 남는 자리는 quantum 이 도로 가져간다."""
+    quantum = [
         make_news(
-            source_ref=f"ai-{i}",
-            title=rotating_title(_AI_TITLE_TERMS, i),
+            source_ref=f"quantum-{i}",
+            title=rotating_title(_QUANTUM_TITLE_TERMS, i),
             crawled_at=(NOW - datetime.timedelta(minutes=i + 1)).isoformat(),
         )
         for i in range(collect_daily.NEWS_LIMIT + 20)
     ]
-    industry = [make_news(source_ref="industry-0", title="엔비디아 HBM 공급 부족")]
+    physics = [make_news(source_ref="physics-0", title="초전도 박막 극저온 특성 측정")]
 
-    result = collect_daily.filter_news(ai + industry, NOW)
+    result = collect_daily.filter_news(quantum + physics, NOW)
 
     assert len(result) == collect_daily.NEWS_LIMIT
-    assert sum(1 for n in result if n["relevance"] == "industry") == 1
-    assert sum(1 for n in result if n["relevance"] == "ai") == collect_daily.NEWS_LIMIT - 1
+    assert sum(1 for n in result if n["relevance"] == "physics") == 1
+    assert sum(1 for n in result if n["relevance"] == "quantum") == collect_daily.NEWS_LIMIT - 1
 
 
 # ---- collect_daily 이미지 중복배제 (average hash) ----

@@ -54,10 +54,10 @@ def test_clean_edition_passes() -> None:
 
 
 def test_banned_transliteration_is_caught() -> None:
-    problems = find_problems(build(body="앤스로픽이 신제품을 냈다고 밝혔습니다."))
+    problems = find_problems(build(body="양자 컴퓨터가 새 기록을 세웠다고 밝혔습니다."))
 
     assert len(problems) == 1
-    assert "앤스로픽" in problems[0] and "앤트로픽" in problems[0]
+    assert "양자 컴퓨터" in problems[0] and "양자컴퓨터" in problems[0]
     assert "카드 1 body" in problems[0]
 
 
@@ -109,7 +109,7 @@ def test_quote_may_be_absent() -> None:
 
 
 def test_qa_answers_are_checked_too() -> None:
-    qa = [{"question": "왜 그런가요?", "answer": "앤스로픽이 맡고 있습니다.", "sources": []}]
+    qa = [{"question": "왜 그런가요?", "answer": "양자 컴퓨터가 맡고 있습니다.", "sources": []}]
     problems = find_problems(build(qa=qa))
 
     assert len(problems) == 1
@@ -177,7 +177,7 @@ def test_trending_topic_is_checked_but_source_titles_are_not() -> None:
         {"rank": rank, "topic": f"토픽 {rank}", "heat": 100 - rank, "mentions": 3, "sources": 2}
         for rank in range(1, 11)
     ]
-    items[0]["topic"] = "앤스로픽 투자"
+    items[0]["topic"] = "양자 컴퓨터 투자"
     # 기사 원제는 그대로 옮기는 게 계약이라 여기서 걸면 안 된다.
     items[0]["links"] = [
         {"title": "594 BTC moved", "href": "https://e.com/a", "source": "Decrypt"}

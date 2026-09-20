@@ -16,7 +16,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-DATA_FILE = Path(__file__).resolve().parent / "data" / "ai_quotes.json"
+DATA_FILE = Path(__file__).resolve().parent / "data" / "quantum_quotes.json"
 
 
 @dataclass(frozen=True)
