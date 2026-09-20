@@ -106,6 +106,11 @@ def test_og_html_contains_meta_tags(client) -> None:
     # CLAUDE.md 가 그대로 두기로 한 파일이다), 뒤에 붙는 브랜드는 이 서비스 것이다.
     assert 'property="og:title" content="비트코인 하이라이트' in body
     assert '위클리 퀀텀" />' in body
+    # site_name 은 title 과 별개의 하드코딩 자리였다 — ai-daily-web 을 포크할 때
+    # (2026-09-20) 안 고쳐진 채로 "데일리 AI" 가 남아 있었다(2026-09-21 실측: 실제
+    # 카카오톡/트위터 공유 미리보기가 이 값을 그대로 냈다). title 문자열만 훑는
+    # 위 단언으로는 못 잡아서 따로 둔다.
+    assert 'property="og:site_name" content="위클리 퀀텀" />' in body
     assert 'property="og:description"' in body
     assert (
         'property="og:image" content="http://testserver/quantum/api/og/2026-07-30/image.jpg"'

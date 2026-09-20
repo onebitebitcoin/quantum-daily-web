@@ -113,6 +113,13 @@ def build_og_description(
 # 같은 값이어야 한다 — 한 곳만 바꾸면 미리보기 링크가 404 로 간다.
 SUBPATH = "/quantum"
 
+# 화면 브랜드. frontend/index.html 의 <title>·og:site_name·og:title 과 같은 값이어야
+# 한다. 한 곳에 상수로 모아 둔 이유: 2026-09-20 ai-daily-web 을 포크했을 때
+# og:site_name 자리에 "데일리 AI" 가 하드코딩된 채 안 고쳐져 있었고(title 문자열은
+# f-string 이라 눈에 띄었지만 이 값은 리터럴로 따로 있어 놓쳤다), 2026-09-21
+# 개명(quantum-daily-web → quantum-weekly-web) 때도 같은 실수가 반복될 뻔했다.
+BRAND = "위클리 퀀텀"
+
 
 def _request_origin(request: Request) -> str:
     scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
@@ -132,7 +139,7 @@ def render_og_html(
     card = pick_card(content, card_index)
     headline = card["title"] if card is not None else content["meta"]["title"]
 
-    title = html.escape(f"{headline} · 위클리 퀀텀")
+    title = html.escape(f"{headline} · {BRAND}")
     description = html.escape(build_og_description(content, card_index=card_index))
     # 이 도메인은 시리즈가 둘이라 API 가 `/quantum/api` 로 물러나 있다
     # (frontend/src/apiBase.ts 와 짝). 미리보기 봇이 여는 절대 URL 이므로
@@ -155,7 +162,7 @@ def render_og_html(
     <title>{title}</title>
     <meta name="description" content="{description}" />
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="데일리 AI" />
+    <meta property="og:site_name" content="{BRAND}" />
     <meta property="og:title" content="{title}" />
     <meta property="og:description" content="{description}" />
     <meta property="og:image" content="{image_url}" />
