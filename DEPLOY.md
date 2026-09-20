@@ -1,4 +1,4 @@
-# DEPLOY.md — quantum-daily-web 최초 배포 런북
+# DEPLOY.md — quantum-weekly-web 최초 배포 런북
 
 **이 문서를 읽는 대상은 배포 서버에 접속한 사람 또는 Claude다.** 위에서부터
 순서대로 실행하고, 각 단계 끝의 "확인"이 기대한 값을 내지 않으면 **다음 단계로
@@ -12,7 +12,7 @@
 | 도메인 | `daily.onebitecoder.com` |
 | 사람이 보는 주소 | `https://daily.onebitecoder.com/ai` (루트 `/`는 `/quantum/`로 301) |
 | 컨테이너 노출 포트 | `127.0.0.1:8023` (btc-daily-web이 8020) |
-| compose 프로젝트명 | `quantum-daily-web` (디렉토리명 — btc와 갈라져 볼륨·네트워크가 안 겹친다) |
+| compose 프로젝트명 | `quantum-weekly-web` (docker-compose.yml 의 `name:` 으로 고정 — 저장소·디렉토리는 quantum-weekly-web 이지만, 프로젝트명을 따라가면 다음 배포가 빈 볼륨으로 뜬다) |
 | 서비스 | `db`(Postgres 16) · `backend`(uvicorn) · `web`(nginx) |
 
 ---
@@ -45,8 +45,8 @@ DNS는 Cloudflare 프록시(주황 구름) 뒤에 있어도 된다 — `dig`에�
 
 ```bash
 cd /home/measly
-git clone https://github.com/onebitebitcoin/quantum-daily-web.git   # 이미 있으면 git pull
-cd /home/measly/quantum-daily-web
+git clone https://github.com/onebitebitcoin/quantum-weekly-web.git   # 이미 있으면 git pull
+cd /home/measly/quantum-weekly-web
 git log --oneline -1
 ```
 
@@ -87,7 +87,7 @@ cp .env.example .env
 > `push_edition.py`가 하는데, 그 스크립트는 **맥의 `backend/.env`** 에 있는
 > `ADMIN_API_KEY`로 인증한다. 서버 값이 다르면 카드 10장을 다 만들고 게이트를
 > 전부 통과한 뒤 마지막 POST에서 401로 튕긴다. 사람이 맥의
-> `quantum-daily-web/backend/.env`에서 그 줄을 가져와 여기 붙여넣어야 한다.
+> `quantum-weekly-web/backend/.env`에서 그 줄을 가져와 여기 붙여넣어야 한다.
 >
 > Claude가 이 단계를 대신할 수 없다 — 값을 물어보고 기다려라.
 
@@ -217,7 +217,7 @@ done
 my-youtube `:23456`)가 맥에만 있기 때문이다.
 
 ```bash
-cd ~/meeting_room/lab/quantum-daily-web/backend && source .venv/bin/activate
+cd ~/meeting_room/lab/quantum-weekly-web/backend && source .venv/bin/activate
 python scripts/push_edition.py ../drafts/edition-2026-08-29.json \
        --api https://daily.onebitecoder.com
 ```
@@ -269,19 +269,19 @@ zsh scripts/daily-cron.sh && tail -40 logs/daily-cron-$(date +%F).log
 
 | | 값 |
 |---|---|
-| 러너 이름 | `measly-quantum-daily` |
-| 러너 라벨 | `self-hosted, quantum-daily-web` ← btc 러너 라벨(`btc-daily-web`)과 반드시 달라야 한다 |
-| 러너 경로 | `/home/measly/actions-runner-quantum-daily` |
-| systemd | `actions.runner.onebitebitcoin-quantum-daily-web.measly-quantum-daily.service` |
+| 러너 이름 | `measly-quantum-weekly` |
+| 러너 라벨 | `self-hosted, quantum-weekly-web` ← btc 러너 라벨(`btc-daily-web`)과 반드시 달라야 한다 |
+| 러너 경로 | `/home/measly/actions-runner-quantum-weekly` |
+| systemd | `actions.runner.onebitebitcoin-quantum-weekly-web.measly-quantum-weekly.service` |
 
 ```bash
 # 러너 상태
-systemctl status actions.runner.onebitebitcoin-quantum-daily-web.measly-quantum-daily.service
-gh api repos/onebitebitcoin/quantum-daily-web/actions/runners \
+systemctl status actions.runner.onebitebitcoin-quantum-weekly-web.measly-quantum-weekly.service
+gh api repos/onebitebitcoin/quantum-weekly-web/actions/runners \
   --jq '.runners[] | "\(.name) \(.status) \([.labels[].name]|join(","))"'
 
 # 배포 결과
-gh run list --repo onebitebitcoin/quantum-daily-web --limit 5
+gh run list --repo onebitebitcoin/quantum-weekly-web --limit 5
 ```
 
 마이그레이션은 backend 컨테이너가 기동하며 `alembic upgrade head`로 적용한다.
@@ -294,7 +294,7 @@ gh run list --repo onebitebitcoin/quantum-daily-web --limit 5
 러너가 죽었거나 워크플로를 우회할 때만 쓴다:
 
 ```bash
-cd /home/measly/quantum-daily-web && git pull && docker compose up -d --build
+cd /home/measly/quantum-weekly-web && git pull && docker compose up -d --build
 curl -s localhost:8023/health
 ```
 
@@ -303,10 +303,10 @@ curl -s localhost:8023/health
 등록 토큰은 일회용이라 매번 새로 받는다:
 
 ```bash
-cd /home/measly/actions-runner-quantum-daily
-TOKEN=$(gh api -X POST repos/onebitebitcoin/quantum-daily-web/actions/runners/registration-token --jq .token)
-./config.sh --url https://github.com/onebitebitcoin/quantum-daily-web --token "$TOKEN" \
-  --name measly-quantum-daily --labels quantum-daily-web --work _work --unattended --replace
+cd /home/measly/actions-runner-quantum-weekly
+TOKEN=$(gh api -X POST repos/onebitebitcoin/quantum-weekly-web/actions/runners/registration-token --jq .token)
+./config.sh --url https://github.com/onebitebitcoin/quantum-weekly-web --token "$TOKEN" \
+  --name measly-quantum-weekly --labels quantum-weekly-web --work _work --unattended --replace
 sudo ./svc.sh install measly && sudo ./svc.sh start
 ```
 

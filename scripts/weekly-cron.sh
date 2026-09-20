@@ -7,7 +7,7 @@
 # 수동으로 한 번 돌린 뒤에 또 발화해도 같은 날짜를 덮어쓰지 않게 한다.
 set -u
 
-ROOT=/Users/nsw/meeting_room/lab/quantum-daily-web
+ROOT=/Users/nsw/meeting_room/lab/quantum-weekly-web
 # 발행처. /quantum 컨테이너를 서버에 올리기 전까지는 로컬(:8004)을 가리킨다.
 # 배포가 끝나면 plist 의 QUANTUM_DAILY_API 를 프로덕션 주소로 바꾼다.
 API="${QUANTUM_DAILY_API:-http://localhost:8004}"

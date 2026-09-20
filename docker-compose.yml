@@ -1,3 +1,11 @@
+# compose 프로젝트명을 예전 이름으로 고정한다. 저장소·디렉토리는 quantum-weekly-web
+# 으로 옮겼지만(2026-09-21 개명, "데일리"가 실제로는 수집만 매일이고 발행은 주 1회라
+# 이름을 맞췄다), 이 이름은 컨테이너·볼륨·네트워크 이름의 접두사가 된다. name: 없이
+# 디렉토리명을 그대로 쓰면 다음 배포에서 quantum-weekly-web_pgdata 라는 새 빈 볼륨이
+# 생기고, 그 안에는 이미 발행한 데이터(2026-09-20 첫 주간호)가 없다 — pgdata 는
+# 재생성이 불가능하므로(CLAUDE.md) 이 이름은 절대 바꾸지 않는다.
+name: quantum-daily-web
+
 services:
   db:
     image: postgres:16-alpine

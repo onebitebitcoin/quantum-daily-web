@@ -1,11 +1,11 @@
-# quantum-daily-web
+# quantum-weekly-web
 
 `ai-daily-web` 에서 갈라져 나온 양자 카드뉴스 발행기다. 파이프라인 구조(수집 →
 후보 선별 → 카드 10장 → 발행)는 같고, **수집 주기와 발행 주기가 다르다.**
 
 ## 이 프로젝트만의 것 (ai-daily-web 과 다른 점)
 
-| | ai-daily-web | quantum-daily-web |
+| | ai-daily-web | quantum-weekly-web |
 |---|---|---|
 | 포트 | backend 8003 · frontend 5176 | **backend 8004 · frontend 5177** |
 | 컨테이너 포트 | 8021 | **8023** |

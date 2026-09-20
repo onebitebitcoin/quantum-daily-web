@@ -1,6 +1,6 @@
 ---
 name: quantum-weekly
-description: 최근 7일 my-news + my-youtube 데이터로 이번 주 양자 카드뉴스 10장을 만들어 quantum-daily-web에 발행한다. "quantum weekly", "이번 주 양자 카드뉴스", "양자 카드뉴스 발행" 키워드로 트리거.
+description: 최근 7일 my-news + my-youtube 데이터로 이번 주 양자 카드뉴스 10장을 만들어 quantum-weekly-web에 발행한다. "quantum weekly", "이번 주 양자 카드뉴스", "양자 카드뉴스 발행" 키워드로 트리거.
 ---
 
 # quantum-weekly — 이번 주 양자 카드뉴스 발행
@@ -11,14 +11,14 @@ description: 최근 7일 my-news + my-youtube 데이터로 이번 주 양자 카
 `quantum-weekly-web`의 같은 스킬에서 갈라져 나왔다. 파이프라인 구조(수집 → 후보 선별 →
 카드 10장 → 발행)는 같고, 도메인 용어집·등급·클러스터링이 다르다.
 
-프로젝트 루트: `/Users/nsw/meeting_room/lab/quantum-daily-web`
+프로젝트 루트: `/Users/nsw/meeting_room/lab/quantum-weekly-web`
 
 ## 고정 포트 (이 머신 기준, 바꾸지 말 것)
 
 | 대상 | 포트 |
 |---|---|
-| quantum-daily-web backend | 8004 |
-| quantum-daily-web frontend | 5177 |
+| quantum-weekly-web backend | 8004 |
+| quantum-weekly-web frontend | 5177 |
 | my-news (소스) | 8000 |
 | my-youtube (소스) | 23456 |
 

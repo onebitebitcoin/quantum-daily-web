@@ -105,7 +105,7 @@ def test_og_html_contains_meta_tags(client) -> None:
     # 앞부분은 레퍼런스 페이로드의 meta.title(비트코인 카드뉴스 시절 표본이라
     # CLAUDE.md 가 그대로 두기로 한 파일이다), 뒤에 붙는 브랜드는 이 서비스 것이다.
     assert 'property="og:title" content="비트코인 하이라이트' in body
-    assert '데일리 퀀텀" />' in body
+    assert '위클리 퀀텀" />' in body
     assert 'property="og:description"' in body
     assert (
         'property="og:image" content="http://testserver/quantum/api/og/2026-07-30/image.jpg"'

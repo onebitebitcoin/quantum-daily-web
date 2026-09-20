@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# quantum-daily-web DB 일일 백업.
+# quantum-weekly-web DB 일일 백업.
 #
 # 발행 데이터는 재생성이 불가능하다 — 수집 소스(my-news/my-youtube)는 24시간 창만
 # 보여주고, Q&A는 Gemini 유료 호출 결과다. 볼륨 하나에만 있는 상태로 두지 않는다.
 #
 # crontab 등록 (기존 stackhealth 스크립트와 같은 형식):
-#   30 4 * * * /bin/bash /home/measly/quantum-daily-web/deploy/backup.sh >> /home/measly/.claude/logs/quantum-daily-backup.log 2>&1
+#   30 4 * * * /bin/bash /home/measly/quantum-weekly-web/deploy/backup.sh >> /home/measly/.claude/logs/quantum-daily-backup.log 2>&1
 #
 # 복구:
 #   gunzip -c ~/backups/quantum-daily/ai-daily-2026-08-26.sql.gz \
@@ -13,6 +13,10 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# 디렉토리 기본값·백업 파일명 프리픽스는 예전 이름(quantum-daily)을 그대로 쓴다 —
+# QUANTUM_DAILY_BACKUP_DIR 환경변수명 자체도 이번 개명(quantum-weekly-web) 범위
+# 밖으로 남겨 뒀다(런처 재등록이 하나 더 늘지 않게). 아직 서버에 크론이 등록되지
+# 않았으니 데이터 보존 문제는 없고, 값을 그대로 유지한 것뿐이다.
 BACKUP_DIR="${QUANTUM_DAILY_BACKUP_DIR:-$HOME/backups/quantum-daily}"
 RETENTION_DAYS=14
 

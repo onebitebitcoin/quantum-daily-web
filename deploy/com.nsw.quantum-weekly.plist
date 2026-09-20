@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  quantum-daily-web 발행 스케줄. **주 1회**, 일요일 07:10 KST 다.
+  quantum-weekly-web 발행 스케줄. **주 1회**, 일요일 07:10 KST 다.
   이 파일은 개발 머신(맥)에 설치한다 — 수집 소스(my-news :8000, my-youtube :23456)가
   맥에만 있어서, 수집과 문구작성은 맥에서 하고 완성된 에디션만 발행처로 POST 한다.
 
@@ -23,7 +23,7 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/bin/zsh</string>
-		<string>/Users/nsw/meeting_room/lab/quantum-daily-web/scripts/weekly-cron.sh</string>
+		<string>/Users/nsw/meeting_room/lab/quantum-weekly-web/scripts/weekly-cron.sh</string>
 	</array>
 
 	<key>StartCalendarInterval</key>
@@ -51,8 +51,8 @@
 	</dict>
 
 	<key>StandardOutPath</key>
-	<string>/Users/nsw/meeting_room/lab/quantum-daily-web/logs/weekly-launchd.out</string>
+	<string>/Users/nsw/meeting_room/lab/quantum-weekly-web/logs/weekly-launchd.out</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/nsw/meeting_room/lab/quantum-daily-web/logs/weekly-launchd.err</string>
+	<string>/Users/nsw/meeting_room/lab/quantum-weekly-web/logs/weekly-launchd.err</string>
 </dict>
 </plist>

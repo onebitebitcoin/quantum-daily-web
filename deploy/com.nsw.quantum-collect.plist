@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  quantum-daily-web 수집 스케줄. **매일** 돈다 — 발행은 주 1회지만 후보 창이 7일이라
+  quantum-weekly-web 수집 스케줄. **매일** 돈다 — 발행은 주 1회지만 후보 창이 7일이라
   매일 갱신해 두어야 일요일에 소스가 죽어 있어도 그 주가 통째로 비지 않는다.
   logs/collect-stats.tsv 에 일별 집계도 같이 쌓인다.
 
@@ -19,7 +19,7 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/bin/zsh</string>
-		<string>/Users/nsw/meeting_room/lab/quantum-daily-web/scripts/daily-collect.sh</string>
+		<string>/Users/nsw/meeting_room/lab/quantum-weekly-web/scripts/daily-collect.sh</string>
 	</array>
 
 	<key>StartCalendarInterval</key>
@@ -45,8 +45,8 @@
 	</dict>
 
 	<key>StandardOutPath</key>
-	<string>/Users/nsw/meeting_room/lab/quantum-daily-web/logs/collect-launchd.out</string>
+	<string>/Users/nsw/meeting_room/lab/quantum-weekly-web/logs/collect-launchd.out</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/nsw/meeting_room/lab/quantum-daily-web/logs/collect-launchd.err</string>
+	<string>/Users/nsw/meeting_room/lab/quantum-weekly-web/logs/collect-launchd.err</string>
 </dict>
 </plist>

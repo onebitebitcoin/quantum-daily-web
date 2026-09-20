@@ -8,7 +8,7 @@
 #      logs/collect-stats.tsv 가 그 기록이다.
 set -u
 
-ROOT=/Users/nsw/meeting_room/lab/quantum-daily-web
+ROOT=/Users/nsw/meeting_room/lab/quantum-weekly-web
 LOG="$ROOT/logs/collect-$(date +%F).log"
 STATS="$ROOT/logs/collect-stats.tsv"
 mkdir -p "$ROOT/logs"

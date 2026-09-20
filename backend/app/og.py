@@ -132,7 +132,7 @@ def render_og_html(
     card = pick_card(content, card_index)
     headline = card["title"] if card is not None else content["meta"]["title"]
 
-    title = html.escape(f"{headline} · 데일리 퀀텀")
+    title = html.escape(f"{headline} · 위클리 퀀텀")
     description = html.escape(build_og_description(content, card_index=card_index))
     # 이 도메인은 시리즈가 둘이라 API 가 `/quantum/api` 로 물러나 있다
     # (frontend/src/apiBase.ts 와 짝). 미리보기 봇이 여는 절대 URL 이므로
